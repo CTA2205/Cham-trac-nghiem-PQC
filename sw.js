@@ -3,7 +3,7 @@
  * Tự động lưu cache toàn bộ ứng dụng để giáo viên mang máy vào phòng thi không có mạng vẫn chạy 100%.
  */
 
-const CACHE_NAME = 'cham-thi-2025-pwa-v1';
+const CACHE_NAME = 'cham-thi-2025-pwa-v3';
 
 const ASSETS_TO_CACHE = [
   './',
@@ -16,7 +16,8 @@ const ASSETS_TO_CACHE = [
   './js/export-zip.js',
   './js/app-pwa.js',
   './lib/xlsx.full.min.js',
-  './lib/jszip.min.js'
+  './lib/jszip.min.js',
+  './MAU%20DAP%20AN.xlsx'
 ];
 
 // Cài đặt Service Worker và nạp toàn bộ tài nguyên vào Cache

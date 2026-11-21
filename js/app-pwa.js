@@ -293,9 +293,9 @@ class AppController {
     // Chụp trực tiếp bằng Camera điện thoại (Mobile Native Camera capture)
     const mobileCamInput = document.getElementById('mobileCameraInput');
     const btnMobileCam = document.getElementById('btnMobileCameraTrigger');
-    if (btnMobileCam && mobileCamInput) {
+    if (btnMobileCam) {
       btnMobileCam.addEventListener('click', () => {
-        mobileCamInput.click();
+        this.openFullscreenCamera();
       });
     }
 
@@ -533,7 +533,7 @@ class AppController {
     // Thử tự động nạp MAU DAP AN.xlsx nếu có sẵn
     if (!this.state.activeExamKeys || Object.keys(this.state.activeExamKeys).length === 0) {
       try {
-        const resp = await fetch('/MAU%20DAP%20AN.xlsx');
+        const resp = await fetch('./MAU%20DAP%20AN.xlsx');
         if (resp.ok) {
           const buf = await resp.arrayBuffer();
           const wb = XLSX.read(buf, { type: 'array' });
@@ -1667,6 +1667,27 @@ class AppController {
     return result;
   }
 
+    async resizeImageIfNeeded(img, maxDim = 1600) {
+    let w = img.naturalWidth || img.width;
+    let h = img.naturalHeight || img.height;
+    if (w <= maxDim && h <= maxDim) {
+      const c = document.createElement('canvas');
+      c.width = w;
+      c.height = h;
+      c.getContext('2d').drawImage(img, 0, 0);
+      return c;
+    }
+    const scale = Math.min(maxDim / w, maxDim / h);
+    const nw = Math.round(w * scale);
+    const nh = Math.round(h * scale);
+    const c = document.createElement('canvas');
+    c.width = nw;
+    c.height = nh;
+    const ctx = c.getContext('2d');
+    ctx.drawImage(img, 0, 0, nw, nh);
+    return c;
+  }
+
   async processSingleImageFile(file) {
     return new Promise((resolve, reject) => {
       const reader = new FileReader();
@@ -1674,11 +1695,8 @@ class AppController {
         const img = new Image();
         img.onload = async () => {
           try {
-            const canvas = document.createElement('canvas');
-            canvas.width = img.naturalWidth || img.width;
-            canvas.height = img.naturalHeight || img.height;
-            const ctx = canvas.getContext('2d');
-            ctx.drawImage(img, 0, 0);
+            // Tối ưu hóa kích thước ảnh trên điện thoại để xử lý siêu tốc
+            const canvas = await this.resizeImageIfNeeded(img, 1600);
 
             const result = await window.omrEngine.processSheetCanvas(
               canvas,
@@ -1693,10 +1711,10 @@ class AppController {
             reject(err);
           }
         };
-        img.onerror = reject;
+        img.onerror = () => reject(new Error("Không thể nạp dữ liệu ảnh"));
         img.src = e.target.result;
       };
-      reader.onerror = reject;
+      reader.onerror = () => reject(new Error("Lỗi đọc file ảnh"));
       reader.readAsDataURL(file);
     });
   }
@@ -4058,6 +4076,225 @@ class AppController {
 
     window.exportZipHandler.downloadBlob(blob, fileName);
     this.showToast("Đã xuất file nén kết quả (.ZIP) thành công!", "success");
+  }
+
+
+  // --- TÍNH NĂNG CHẤM BẰNG CAMERA ĐIỆN THOẠI & SỬA NHANH (LIVE FAST-FIX) ---
+  async handleMobileCapturedPhoto(file) {
+    if (!file) return;
+    this.showToast("📸 Đang đọc và nhận diện bài thi vừa chụp...", "info");
+
+    const progWrap = document.getElementById('gradingProgressWrap');
+    const progText = document.getElementById('gradingProgressText');
+    const progPercent = document.getElementById('gradingProgressPercent');
+    const progStatus = document.getElementById('gradingCurrentStatus');
+    if (progWrap) progWrap.style.display = 'block';
+    if (progText) progText.textContent = "Đang nhận diện bài thi vừa chụp...";
+    if (progPercent) progPercent.textContent = "50%";
+    if (progStatus) progStatus.innerHTML = "Đang nắn khổ A4 & quét ô tô...";
+
+    try {
+      const result = await this.processSingleImageFile(file);
+      if (progPercent) progPercent.textContent = "100%";
+      if (progWrap) progWrap.style.display = 'none';
+
+      // Chuyển sang Tab Chấm bài để người dùng nhìn thấy kết quả
+      this.switchTab('tab-scan');
+
+      const sbdClean = String(result.sbd || '').trim();
+      const isSbdInvalid = !sbdClean || sbdClean.includes('?') || sbdClean.includes('_') || sbdClean.length < 8 || sbdClean === '00000000' || sbdClean === '________';
+      const isExamCodeInvalid = !result.examCode || !this.state.activeExamKeys[result.examCode] || result.examCode === '???';
+
+      if (isSbdInvalid || isExamCodeInvalid) {
+        // Có lỗi tô SBD hoặc Mã đề -> Mở popup sửa nhanh ngay lúc chụp
+        this.openFastFixModal(result);
+      } else {
+        this.showToast(`✓ Đã chấm xong: SBD ${result.sbd} - Mã đề ${result.examCode} - Điểm: ${result.totalScore.toFixed(2)}đ`, "success");
+      }
+    } catch (err) {
+      if (progWrap) progWrap.style.display = 'none';
+      console.error("Lỗi khi xử lý ảnh chụp điện thoại:", err);
+      this.showToast("Không nhận diện được bài thi: " + (err.message || "Ảnh mờ hoặc không đủ 4 góc định vị"), "danger");
+    }
+  }
+
+  openFastFixModal(paper) {
+    this.state.currentFastFixPaper = paper;
+    this.state.fastFixSelectedCode = paper.examCode || '';
+
+    const modal = document.getElementById('fastFixModal');
+    if (!modal) return;
+
+    // Hiển thị phần đầu phiếu viết tay của học sinh (Họ tên, SBD, Mã đề viết mực xanh)
+    const previewCanvas = document.getElementById('fastFixHeaderCanvas');
+    if (previewCanvas && (paper.cleanImage || paper.previewImage)) {
+      const img = new Image();
+      img.onload = () => {
+        // Cắt 26% trên cùng của bài thi (khu vực viết tay thông tin)
+        const cropH = Math.round(img.height * 0.26);
+        previewCanvas.width = img.width;
+        previewCanvas.height = cropH;
+        const ctx = previewCanvas.getContext('2d');
+        ctx.drawImage(img, 0, 0, img.width, cropH, 0, 0, img.width, cropH);
+      };
+      img.src = paper.cleanImage || paper.previewImage;
+    }
+
+    // Điền sẵn SBD nhận diện được
+    const sbdInput = document.getElementById('fastFixSbdInput');
+    if (sbdInput) {
+      const rawSbd = String(paper.sbd || '').replace(/[^0-9]/g, '');
+      sbdInput.value = rawSbd;
+    }
+
+    // Họ tên học sinh
+    const nameInput = document.getElementById('fastFixNameInput');
+    if (nameInput) {
+      nameInput.value = (paper.name && !paper.name.startsWith('Học sinh SBD')) ? paper.name : '';
+    }
+
+    // Hiển thị danh sách nút mã đề để giáo viên bấm chọn 1 chạm
+    const codesContainer = document.getElementById('fastFixExamCodesList');
+    if (codesContainer) {
+      const availableCodes = Object.keys(this.state.activeExamKeys || {});
+      if (availableCodes.length === 0) {
+        codesContainer.innerHTML = '<span style="color:#ef4444; font-size:0.85rem;">Chưa có mã đề nào trong đáp án!</span>';
+      } else {
+        codesContainer.innerHTML = availableCodes.map(code => {
+          const isSelected = (code === paper.examCode);
+          return `<button type="button" class="btn btn-outline btn-sm fast-fix-code-btn ${isSelected ? 'active' : ''}" 
+                          data-code="${code}" 
+                          onclick="window.app.selectFastFixExamCode('${code}')"
+                          style="font-family:monospace; font-weight:800; font-size:0.95rem; padding:6px 14px; border-radius:8px;">
+                    ${code}
+                  </button>`;
+        }).join(' ');
+      }
+    }
+
+    // Ô input mã đề
+    const codeInput = document.getElementById('fastFixExamCodeInput');
+    if (codeInput) {
+      codeInput.value = paper.examCode || '';
+    }
+
+    modal.classList.add('active');
+  }
+
+  selectFastFixExamCode(code) {
+    this.state.fastFixSelectedCode = code;
+    document.querySelectorAll('.fast-fix-code-btn').forEach(btn => {
+      btn.classList.toggle('active', btn.getAttribute('data-code') === code);
+    });
+    const codeInput = document.getElementById('fastFixExamCodeInput');
+    if (codeInput) codeInput.value = code;
+  }
+
+  closeFastFixModal() {
+    const modal = document.getElementById('fastFixModal');
+    if (modal) modal.classList.remove('active');
+    this.state.currentFastFixPaper = null;
+  }
+
+  async confirmFastFix() {
+    const paper = this.state.currentFastFixPaper;
+    if (!paper) {
+      this.closeFastFixModal();
+      return;
+    }
+
+    const sbdInput = document.getElementById('fastFixSbdInput');
+    const nameInput = document.getElementById('fastFixNameInput');
+    const codeInput = document.getElementById('fastFixExamCodeInput');
+
+    let newSbd = sbdInput ? sbdInput.value.trim() : '';
+    if (newSbd.length > 0 && newSbd.length < 8) {
+      newSbd = newSbd.padStart(8, '0');
+    }
+    const newCode = codeInput ? codeInput.value.trim() : (this.state.fastFixSelectedCode || '');
+    const newName = nameInput ? nameInput.value.trim() : '';
+
+    if (!newSbd || newSbd.length !== 8) {
+      this.showToast("Số báo danh phải đủ đúng 8 chữ số!", "warning");
+      if (sbdInput) sbdInput.focus();
+      return;
+    }
+
+    if (!newCode || !this.state.activeExamKeys[newCode]) {
+      this.showToast(`Mã đề "${newCode}" không tồn tại trong danh sách đáp án!`, "warning");
+      return;
+    }
+
+    // Cập nhật thông tin bài thi
+    paper.sbd = newSbd;
+    paper.examCode = newCode;
+    if (paper.scannedData) {
+      paper.scannedData.sbd = newSbd;
+      paper.scannedData.examCode = newCode;
+    }
+
+    // Đối chiếu danh sách học sinh nếu có
+    const stuList = this.state.studentList || [];
+    const foundStu = stuList.find(s => String(s.sbd).trim() === newSbd);
+    if (foundStu) {
+      paper.name = foundStu.name;
+      paper.className = foundStu.className;
+    } else if (newName) {
+      paper.name = newName;
+      paper.className = paper.className || 'Tự do';
+    } else {
+      paper.name = "Học sinh SBD " + newSbd;
+      paper.className = paper.className || 'Tự do';
+    }
+
+    // Tính lại điểm theo mã đề mới
+    const key = this.state.activeExamKeys[newCode];
+    const newGrade = window.omrEngine.calculateGrade(paper.scannedData, key, this.state.gradingRules);
+    paper.p1Score = newGrade.p1Score;
+    paper.p2Score = newGrade.p2Score;
+    paper.p3Score = newGrade.p3Score;
+    paper.totalScore = newGrade.totalScore;
+    paper.notes = newGrade.notes ? `Đã sửa SBD/Mã đề; ${newGrade.notes}` : 'Đã sửa SBD/Mã đề';
+    paper.details = newGrade.details;
+
+    // Lưu vào danh sách đã chấm
+    await this.addGradedSubmission(paper);
+    this.closeFastFixModal();
+    this.showToast(`✓ Đã xác nhận: SBD ${paper.sbd} - Mã đề ${paper.examCode} - Điểm: ${paper.totalScore.toFixed(2)}đ!`, "success");
+    if (window.omrEngine && window.omrEngine.playBeep) {
+      window.omrEngine.playBeep(true);
+    }
+  }
+
+  async shareExcelFile() {
+    if (!this.state.gradedList || this.state.gradedList.length === 0) {
+      this.showToast("Chưa có kết quả bài thi nào để chia sẻ!", "warning");
+      return;
+    }
+    this.showToast("Đang tạo bảng điểm Excel để chia sẻ...", "info");
+    try {
+      const wb = window.excelHandler.exportScoreWorkbook(this.state.gradedList, this.state.examMeta);
+      const fileName = window.excelHandler.getExportFileName(this.state.examMeta);
+      const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'array' });
+      const blob = new Blob([wbout], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+      const file = new File([blob], fileName, { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+
+      if (navigator.canShare && navigator.canShare({ files: [file] })) {
+        await navigator.share({
+          files: [file],
+          title: fileName,
+          text: `Bảng điểm ${this.state.examMeta.examName || 'Kiểm tra'} - Môn ${this.state.examMeta.subject || ''}`
+        });
+        this.showToast("Đã mở menu chia sẻ thành công!", "success");
+      } else {
+        // Fallback: Tải file trực tiếp
+        XLSX.writeFile(wb, fileName);
+        this.showToast(`Trình duyệt không hỗ trợ Web Share, đã tải file: ${fileName}`, "info");
+      }
+    } catch (err) {
+      console.error("Lỗi chia sẻ:", err);
+      this.showToast("Lỗi chia sẻ: " + err.message, "danger");
+    }
   }
 
   shareResultsModal() {

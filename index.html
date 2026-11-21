@@ -5,8 +5,9 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
   <title>Chấm Thi Trắc Nghiệm 2025+ GDPT (PWA Offline)</title>
-  <meta name="description" content="Ứng dụng chấm bài thi trắc nghiệm theo định dạng chuẩn 2025 Bộ GD&ĐT - Hoạt động Offline 100% trên điện thoại & máy tính">
-  
+  <meta name="description"
+    content="Ứng dụng chấm bài thi trắc nghiệm theo định dạng chuẩn 2025 Bộ GD&ĐT - Hoạt động Offline 100% trên điện thoại & máy tính">
+
   <!-- Cấu hình PWA cho Điện Thoại & Trình Duyệt -->
   <meta name="theme-color" content="#4f46e5">
   <meta name="apple-mobile-web-app-capable" content="yes">
@@ -15,7 +16,7 @@
   <link rel="manifest" href="./manifest.json">
   <link rel="apple-touch-icon" href="./icons/icon.svg">
   <link rel="icon" type="image/svg+xml" href="./icons/icon.svg">
-  
+
   <!-- CSS Nội bộ Offline 100% -->
   <link rel="stylesheet" href="./css/style.css">
 </head>
@@ -89,7 +90,8 @@
             <div style="font-weight:700; font-size:1.02rem; color:#1e1b4b; display:flex; align-items:center; gap:8px;">
               <span>🎯 CHẾ ĐỘ NGUỒN ĐÁP ÁN ĐỂ CHẤM:</span>
               <span id="activeSourceBadge" class="badge"
-                style="background:#4f46e5; color:#fff; font-size:0.8rem; padding:3px 10px; border-radius:20px;">Đang chấm theo Tệp Excel (Mục 2)</span>
+                style="background:#4f46e5; color:#fff; font-size:0.8rem; padding:3px 10px; border-radius:20px;">Đang
+                chấm theo Tệp Excel (Mục 2)</span>
             </div>
             <p style="margin:3px 0 0; font-size:0.82rem; color:#64748b;">
               Chọn nguồn đáp án áp dụng khi chấm bài: từ tệp Excel đính kèm hay từ bảng nhập trực tiếp
@@ -128,7 +130,8 @@
           <div class="file-picker-card">
             <div
               style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px; flex-wrap:wrap; gap:6px;">
-              <label class="form-label" style="font-weight:700; margin-bottom:0;">📄 Chọn tệp Excel đáp án (MAU DAP AN.xlsx):</label>
+              <label class="form-label" style="font-weight:700; margin-bottom:0;">📄 Chọn tệp Excel đáp án (MAU DAP
+                AN.xlsx):</label>
               <button id="btnClearAnswerFile" class="btn btn-outline btn-sm"
                 style="color:var(--danger); border-color:#fca5a5; padding:3px 10px; font-size:0.78rem; font-weight:700;"
                 title="Hủy tệp Excel để quay về nhập trực tiếp">✕ Hủy chọn tệp đáp án</button>
@@ -142,7 +145,8 @@
             <select id="sheetSelect" class="form-control" style="font-weight:600; color:#312e81; cursor:pointer;">
               <option value="Mau dap an" selected>Mau dap an (Chuẩn THPT 2025)</option>
             </select>
-            <p class="dropzone-hint" style="margin-top:6px; color:#4f46e5;">✨ Giáo viên chọn sheet nào, App sẽ chấm theo đúng sheet đó.</p>
+            <p class="dropzone-hint" style="margin-top:6px; color:#4f46e5;">✨ Giáo viên chọn sheet nào, App sẽ chấm theo
+              đúng sheet đó.</p>
           </div>
         </div>
       </div>
@@ -154,13 +158,15 @@
             <span class="section-badge-icon" style="background:#f3e8ff; color:#7e22ce;">✍️</span>
             <div>
               <h3>3. Bảng Nhập & Chỉnh Sửa Đáp Án Trực Tiếp <span id="badgeSec3" class="badge"
-                  style="background:#10b981; color:#fff; font-size:0.75rem; margin-left:6px; display:none;">[Đang kích hoạt]</span></h3>
+                  style="background:#10b981; color:#fff; font-size:0.75rem; margin-left:6px; display:none;">[Đang kích
+                  hoạt]</span></h3>
               <p>Soạn nhanh đáp án trên điện thoại, chọn nhiều đáp án đúng hoặc cho điểm trọn vẹn (*)</p>
             </div>
           </div>
           <div style="display:flex; gap:8px; flex-wrap:wrap;">
             <button id="btnAddExamCode" class="btn btn-outline btn-sm">➕ Thêm Mã Đề</button>
-            <button id="btnDeleteCurrentCode" class="btn btn-outline btn-sm" style="color:var(--danger)">🗑 Xóa Mã Đề</button>
+            <button id="btnDeleteCurrentCode" class="btn btn-outline btn-sm" style="color:var(--danger)">🗑 Xóa Mã
+              Đề</button>
             <button id="btnExportAnswerExcel" class="btn btn-success btn-sm">📥 Xuất File Excel Đáp Án</button>
           </div>
         </div>
@@ -197,7 +203,8 @@
     <!-- TAB 2: DANH SÁCH HỌC SINH (TÙY CHỌN) -->
     <section id="tab-students" class="tab-pane">
       <!-- Banner Hướng Dẫn Tùy Chọn -->
-      <div style="background:linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border:2px solid #3b82f6; border-radius:12px; padding:14px 18px; margin-bottom:16px;">
+      <div
+        style="background:linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%); border:2px solid #3b82f6; border-radius:12px; padding:14px 18px; margin-bottom:16px;">
         <div style="display:flex; align-items:flex-start; gap:12px;">
           <span style="font-size:1.8rem; line-height:1;">💡</span>
           <div>
@@ -205,9 +212,12 @@
               TÙY CHỌN - KHÔNG BẮT BUỘC NẠP DANH SÁCH TRƯỚC
             </h4>
             <p style="font-size:0.85rem; color:#1e3a8a; margin:0; line-height:1.5;">
-              • Nếu thầy/cô <strong>chưa có danh sách học sinh</strong>: Cứ chụp chấm bài bình thường! Hệ thống tự động nhận diện SBD 8 số đã tô trên phiếu và tính điểm đầy đủ.<br>
-              • Khi xuất tệp Excel, danh sách được <strong>tự động sắp xếp theo SBD tăng dần</strong> (cột B), giúp thầy/cô dễ dàng dùng hàm <code>VLOOKUP</code> để ghép tên và lớp trên máy tính sau này.<br>
-              • Nếu nạp tệp <code>DANH SACH HỌC SINH.xlsx</code>: Hệ thống sẽ tự động đối chiếu để điền chính xác Họ tên và Lớp của học sinh.
+              • Nếu thầy/cô <strong>chưa có danh sách học sinh</strong>: Cứ chụp chấm bài bình thường! Hệ thống tự động
+              nhận diện SBD 8 số đã tô trên phiếu và tính điểm đầy đủ.<br>
+              • Khi xuất tệp Excel, danh sách được <strong>tự động sắp xếp theo SBD tăng dần</strong> (cột B), giúp
+              thầy/cô dễ dàng dùng hàm <code>VLOOKUP</code> để ghép tên và lớp trên máy tính sau này.<br>
+              • Nếu nạp tệp <code>DANH SACH HỌC SINH.xlsx</code>: Hệ thống sẽ tự động đối chiếu để điền chính xác Họ tên
+              và Lớp của học sinh.
             </p>
           </div>
         </div>
@@ -224,7 +234,8 @@
           </div>
           <div style="display:flex; gap:8px; flex-wrap:wrap;">
             <button class="btn btn-outline btn-sm" id="btnDownloadSampleStudents">📥 Tải File Mẫu Excel</button>
-            <button class="btn btn-primary btn-sm" onclick="document.getElementById('studentFileInput').click()">📁 Đính Kèm Tệp Danh Sách (.xlsx)</button>
+            <button class="btn btn-primary btn-sm" onclick="document.getElementById('studentFileInput').click()">📁 Đính
+              Kèm Tệp Danh Sách (.xlsx)</button>
             <button id="btnClearStudentFile" class="btn btn-outline btn-sm"
               style="color:var(--danger); border-color:#fca5a5; font-weight:700;"
               title="Xóa danh sách học sinh hiện có">🗑 Xóa danh sách</button>
@@ -243,7 +254,8 @@
       <!-- Thanh công cụ đầu tab Chấm bài -->
       <div
         style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:8px;">
-        <h2 style="font-size:1.15rem; font-weight:700; color:var(--dark); margin:0;">📸 Bàn Chấm Bài Thi Trắc Nghiệm</h2>
+        <h2 style="font-size:1.15rem; font-weight:700; color:var(--dark); margin:0;">📸 Bàn Chấm Bài Thi Trắc Nghiệm
+        </h2>
         <button id="btnRegradeAll" class="btn btn-outline btn-sm btn-regrade"
           title="Chấm lại toàn bộ bài đã quét theo đáp án hoặc thang điểm mới nhất">
           <span>🔄</span> Chấm lại toàn bộ bài đã quét
@@ -251,25 +263,35 @@
       </div>
 
       <!-- KHỐI HÀNH ĐỘNG CHẤM THI ĐIỆN THOẠI NỔI BẬT (PWA MOBILE CAMERA) -->
-      <div class="card" style="border: 2px solid #4f46e5; background:linear-gradient(135deg, #ffffff 0%, #f5f3ff 100%); box-shadow:0 6px 20px rgba(79,70,229,0.12); margin-bottom:16px;">
-        <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:6px;">
+      <div class="card"
+        style="border: 2px solid #4f46e5; background:linear-gradient(135deg, #ffffff 0%, #f5f3ff 100%); box-shadow:0 6px 20px rgba(79,70,229,0.12); margin-bottom:16px;">
+        <div
+          style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; flex-wrap:wrap; gap:6px;">
           <span style="font-size:1.05rem; font-weight:800; color:#1e1b4b; display:flex; align-items:center; gap:6px;">
             <span>📱</span> Chấm Bằng Camera Điện Thoại
           </span>
-          <span class="badge-tag" style="background:#e0e7ff; color:#3730a3; font-weight:700;">Tự động nắn A4 & xoay ảnh</span>
+          <span class="badge-tag" style="background:#e0e7ff; color:#3730a3; font-weight:700;">Tự động nắn A4 & xoay
+            ảnh</span>
         </div>
 
         <!-- Nút Chụp Bằng Camera Chính Nổi Bật -->
         <button id="btnMobileCameraTrigger" class="btn btn-primary btn-lg"
-          style="width:100%; font-weight:800; font-size:1.12rem; padding:16px 14px; background:linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%); box-shadow:0 6px 20px rgba(79,70,229,0.35); border:none; border-radius:14px; display:flex; align-items:center; justify-content:center; gap:10px; cursor:pointer; transition:transform 0.15s ease;">
-          <span style="font-size:1.7rem;">📸</span>
-          <span>BẤM VÀO ĐÂY ĐỂ CHỤP & CHẤM BÀI NGAY</span>
+          style="width:100%; font-weight:800; font-size:1.1rem; padding:15px 14px; background:linear-gradient(135deg, #4f46e5 0%, #06b6d4 100%); box-shadow:0 6px 20px rgba(79,70,229,0.35); border:none; border-radius:14px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; cursor:pointer; transition:transform 0.15s ease;"
+          onclick="window.app.openFullscreenCamera()">
+          <div style="display:flex; align-items:center; gap:8px;">
+            <span style="font-size:1.6rem;">📸</span>
+            <span style="font-size:1.12rem;">MỞ CAMERA TOÀN MÀN HÌNH ĐỂ CHẤM</span>
+          </div>
+          <span style="font-size:0.8rem; font-weight:600; opacity:0.95; color:#e0e7ff;">
+            (Có khung chữ nhật A4 định vị 4 góc đen dễ canh chuẩn)
+          </span>
         </button>
         <!-- Input camera chụp trực tiếp -->
         <input type="file" id="mobileCameraInput" accept="image/*" capture="environment" style="display:none">
 
         <!-- Các nút nạp phụ trợ -->
-        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:8px; margin-top:12px;">
+        <div
+          style="display:grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap:8px; margin-top:12px;">
           <button class="btn btn-outline btn-sm" onclick="document.getElementById('batchImagesInput').click()"
             style="font-weight:700; background:#ffffff; border-color:#cbd5e1;">
             <span>🖼️</span> Nạp ảnh từ máy
@@ -294,10 +316,12 @@
 
         <!-- Khung xem trước Webcam máy tính nếu bật -->
         <div id="cameraContainer" class="camera-preview-wrap" style="display:none; margin-top:14px;">
-          <video id="cameraVideo" autoplay playsinline style="width:100%; max-height:420px; object-fit:contain; border-radius:8px; background:#000;"></video>
+          <video id="cameraVideo" autoplay playsinline
+            style="width:100%; max-height:420px; object-fit:contain; border-radius:8px; background:#000;"></video>
           <canvas id="cameraCanvas" style="display:none;"></canvas>
           <div style="display:flex; justify-content:center; gap:10px; margin-top:8px;">
-            <button id="btnCapturePhoto" class="btn btn-success btn-lg" style="font-weight:700;">📸 Chụp Khung Hình Này</button>
+            <button id="btnCapturePhoto" class="btn btn-success btn-lg" style="font-weight:700;">📸 Chụp Khung Hình
+              Này</button>
             <button class="btn btn-outline" onclick="window.app.stopCamera()">✕ Tắt Camera</button>
           </div>
         </div>
@@ -306,23 +330,29 @@
         <div style="background:#f0fdf4; border:1px solid #bbf7d0; border-radius:10px; padding:12px; margin-top:12px;">
           <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
             <span style="font-weight:700; color:#15803d; font-size:0.88rem;">📋 Trạng thái xử lý bài thi:</span>
-            <span id="stagedCountBadge" style="font-size:0.8rem; font-weight:700; color:#166534; background:#dcfce7; padding:2px 8px; border-radius:20px;"></span>
+            <span id="stagedCountBadge"
+              style="font-size:0.8rem; font-weight:700; color:#166534; background:#dcfce7; padding:2px 8px; border-radius:20px;"></span>
           </div>
 
-          <div id="stagedFilesBox" style="font-size:0.82rem; color:#166534; background:#ffffff; border:1px solid #bbf7d0; border-radius:8px; padding:8px 10px; max-height:75px; overflow-y:auto; margin-bottom:8px; font-family:monospace; line-height:1.45;">
+          <div id="stagedFilesBox"
+            style="font-size:0.82rem; color:#166534; background:#ffffff; border:1px solid #bbf7d0; border-radius:8px; padding:8px 10px; max-height:75px; overflow-y:auto; margin-bottom:8px; font-family:monospace; line-height:1.45;">
             Sẵn sàng chấm bài! Bấm nút <strong>"📸 BẤM VÀO ĐÂY ĐỂ CHỤP & CHẤM BÀI NGAY"</strong> ở trên để bắt đầu.
           </div>
 
           <!-- Thanh tiến trình chấm bài (Progress Bar) -->
           <div id="gradingProgressWrap" style="display:none; margin-bottom:8px;">
-            <div style="display:flex; justify-content:space-between; font-size:0.8rem; font-weight:700; color:#047857; margin-bottom:4px;">
+            <div
+              style="display:flex; justify-content:space-between; font-size:0.8rem; font-weight:700; color:#047857; margin-bottom:4px;">
               <span id="gradingProgressText">Đang xử lý: bài 0 / 0...</span>
               <span id="gradingProgressPercent">0%</span>
             </div>
             <div style="width:100%; height:8px; background:#e2e8f0; border-radius:10px; overflow:hidden;">
-              <div id="gradingProgressBar" style="width:0%; height:100%; background:linear-gradient(90deg, #10b981, #059669); border-radius:10px; transition:width 0.2s ease;"></div>
+              <div id="gradingProgressBar"
+                style="width:0%; height:100%; background:linear-gradient(90deg, #10b981, #059669); border-radius:10px; transition:width 0.2s ease;">
+              </div>
             </div>
-            <div id="gradingCurrentStatus" style="font-size:0.75rem; color:#065f46; font-style:italic; margin-top:4px;"></div>
+            <div id="gradingCurrentStatus" style="font-size:0.75rem; color:#065f46; font-style:italic; margin-top:4px;">
+            </div>
           </div>
 
           <button id="btnStartGradingAction" class="btn btn-success"
@@ -347,10 +377,12 @@
             <button id="btnScanTabLookupPaper" class="btn btn-primary btn-sm"
               onclick="window.app.openPaperLookupModal()"
               style="font-weight:700; box-shadow:0 2px 8px rgba(79, 70, 229, 0.35);">👁️ Xem Bài (SBD / Họ Tên)</button>
-            <button class="btn btn-outline btn-sm" onclick="window.app.switchTab('tab-results')">📊 Bảng Điểm Đầy Đủ ➡</button>
+            <button class="btn btn-outline btn-sm" onclick="window.app.switchTab('tab-results')">📊 Bảng Điểm Đầy Đủ
+              ➡</button>
             <button id="btnScanClearAll" class="btn btn-outline btn-sm"
               style="color:var(--danger); border-color:#fca5a5; font-weight:700;"
-              onclick="window.app.clearAllGradedPapers()" title="Xóa toàn bộ bài đã chấm để bắt đầu đợt mới">🗑 Xóa Hết Kết Quả</button>
+              onclick="window.app.clearAllGradedPapers()" title="Xóa toàn bộ bài đã chấm để bắt đầu đợt mới">🗑 Xóa Hết
+              Kết Quả</button>
           </div>
         </div>
 
@@ -374,11 +406,13 @@
               onclick="window.app.openPaperLookupModal()"
               style="font-weight:700; box-shadow:0 2px 6px rgba(79, 70, 229, 0.3);">👁️ Xem Bài (SBD / Họ Tên)</button>
             <button id="btnExportExcel" class="btn btn-success btn-sm"
-              title="Xuất bảng điểm Excel 10 cột (Tự động tách sheet theo từng lớp nếu nhiều lớp)">📊 Xuất Excel (10 cột)</button>
+              title="Xuất bảng điểm Excel 10 cột (Tự động tách sheet theo từng lớp nếu nhiều lớp)">📊 Xuất Excel (10
+              cột)</button>
             <button id="btnShareExcel" class="btn btn-primary btn-sm"
               style="background:linear-gradient(135deg, #0284c7 0%, #0369a1 100%); border:none; font-weight:700; box-shadow:0 2px 6px rgba(2,132,199,0.35);"
               title="Chia sẻ bảng điểm trực tiếp qua Zalo, Email, Drive bằng điện thoại">📲 Chia Sẻ Bảng Điểm</button>
-            <button id="btnExportZip" class="btn btn-outline btn-sm" title="Đóng gói nén ZIP phân loại theo từng lớp">📦 Đóng gói ZIP</button>
+            <button id="btnExportZip" class="btn btn-outline btn-sm" title="Đóng gói nén ZIP phân loại theo từng lớp">📦
+              Đóng gói ZIP</button>
             <button id="btnBackupExam" class="btn btn-outline btn-sm"
               title="Tải về tệp .omr để mở lại sau 15-30 ngày">💾 Sao Lưu (.omr)</button>
             <button id="btnClearAll" class="btn btn-outline btn-sm" style="color:var(--danger)">🗑 Xóa hết</button>
@@ -396,7 +430,8 @@
   <!-- MODAL SỬA NHANH SBD & MÃ ĐỀ TẠI LÚC CHỤP (LIVE FAST-FIX MODAL CHO ĐIỆN THOẠI) -->
   <div class="modal-backdrop" id="fastFixModal">
     <div class="modal-card" style="max-width:540px; border-radius:16px; overflow:hidden;">
-      <div class="modal-header" style="background:linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border-bottom:2px solid #f59e0b; padding:12px 16px;">
+      <div class="modal-header"
+        style="background:linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border-bottom:2px solid #f59e0b; padding:12px 16px;">
         <div style="display:flex; align-items:center; gap:10px;">
           <span style="font-size:1.6rem;">⚡</span>
           <div>
@@ -413,11 +448,13 @@
 
       <div class="modal-body" style="padding:14px; max-height:calc(85vh - 120px); overflow-y:auto;">
         <!-- 1. Vùng cắt đầu phiếu viết tay của học sinh -->
-        <div style="margin-bottom:12px; background:#f8fafc; border:1px solid #cbd5e1; border-radius:10px; padding:6px; text-align:center;">
+        <div
+          style="margin-bottom:12px; background:#f8fafc; border:1px solid #cbd5e1; border-radius:10px; padding:6px; text-align:center;">
           <div style="font-size:0.75rem; font-weight:700; color:#475569; margin-bottom:4px; text-align:left;">
             🔍 Vùng chữ viết tay của học sinh trên phiếu:
           </div>
-          <canvas id="fastFixHeaderCanvas" style="max-width:100%; height:auto; border-radius:6px; box-shadow:0 2px 6px rgba(0,0,0,0.1); border:1px solid #e2e8f0;"></canvas>
+          <canvas id="fastFixHeaderCanvas"
+            style="max-width:100%; height:auto; border-radius:6px; box-shadow:0 2px 6px rgba(0,0,0,0.1); border:1px solid #e2e8f0;"></canvas>
         </div>
 
         <!-- 2. Sửa Số Báo Danh (8 số) -->
@@ -426,12 +463,10 @@
             1. Số Báo Danh (8 chữ số):
           </label>
           <div style="display:grid; grid-template-columns: 1.1fr 1fr; gap:8px;">
-            <input type="text" id="fastFixSbdInput" maxlength="8" class="form-control"
-                   placeholder="00012345"
-                   style="font-family:monospace; font-weight:800; font-size:1.15rem; text-align:center; border:2px solid #6366f1; letter-spacing:2px;">
-            <input type="text" id="fastFixNameInput" class="form-control"
-                   placeholder="Họ tên (tùy chọn)..."
-                   style="font-size:0.85rem; font-weight:600;">
+            <input type="text" id="fastFixSbdInput" maxlength="8" class="form-control" placeholder="00012345"
+              style="font-family:monospace; font-weight:800; font-size:1.15rem; text-align:center; border:2px solid #6366f1; letter-spacing:2px;">
+            <input type="text" id="fastFixNameInput" class="form-control" placeholder="Họ tên (tùy chọn)..."
+              style="font-size:0.85rem; font-weight:600;">
           </div>
         </div>
 
@@ -443,16 +478,16 @@
           <div id="fastFixExamCodesList" style="display:flex; flex-wrap:wrap; gap:8px; margin-bottom:8px;">
             <!-- Render danh sách mã đề 1201, 1202... -->
           </div>
-          <input type="text" id="fastFixExamCodeInput" class="form-control"
-                 placeholder="Mã đề (ví dụ: 1201)"
-                 style="font-family:monospace; font-weight:800; font-size:1rem; text-align:center; border:2px solid #6366f1;">
+          <input type="text" id="fastFixExamCodeInput" class="form-control" placeholder="Mã đề (ví dụ: 1201)"
+            style="font-family:monospace; font-weight:800; font-size:1rem; text-align:center; border:2px solid #6366f1;">
         </div>
       </div>
 
-      <div class="modal-footer" style="display:flex; justify-content:space-between; align-items:center; padding:10px 16px; background:#f8fafc; border-top:1px solid #e2e8f0;">
+      <div class="modal-footer"
+        style="display:flex; justify-content:space-between; align-items:center; padding:10px 16px; background:#f8fafc; border-top:1px solid #e2e8f0;">
         <button class="btn btn-outline btn-sm" onclick="window.app.closeFastFixModal()">Bỏ qua</button>
         <button id="btnFastFixConfirm" class="btn btn-primary"
-                style="font-weight:800; font-size:0.95rem; padding:10px 18px; background:linear-gradient(135deg, #4f46e5 0%, #4338ca 100%); box-shadow:0 4px 12px rgba(79,70,229,0.35);">
+          style="font-weight:800; font-size:0.95rem; padding:10px 18px; background:linear-gradient(135deg, #4f46e5 0%, #4338ca 100%); box-shadow:0 4px 12px rgba(79,70,229,0.35);">
           <span>✅</span> XÁC NHẬN & CHẤM NGAY
         </button>
       </div>
@@ -466,8 +501,10 @@
         <div style="display:flex; align-items:center; gap:10px;">
           <span style="font-size:1.4rem;">👁️</span>
           <div>
-            <h3 style="font-size:1.15rem; font-weight:800; color:#1e1b4b; margin:0;">Giao Diện Xem Lại Bài Làm Học Sinh</h3>
-            <p style="font-size:0.8rem; color:#64748b; margin:2px 0 0;">Giáo viên tùy chọn theo SBD hoặc Họ Tên để xem chi tiết</p>
+            <h3 style="font-size:1.15rem; font-weight:800; color:#1e1b4b; margin:0;">Giao Diện Xem Lại Bài Làm Học Sinh
+            </h3>
+            <p style="font-size:0.8rem; color:#64748b; margin:2px 0 0;">Giáo viên tùy chọn theo SBD hoặc Họ Tên để xem
+              chi tiết</p>
           </div>
         </div>
         <button class="btn btn-outline btn-sm" onclick="window.app.closePaperLookupModal()">✕ Đóng</button>
@@ -485,7 +522,8 @@
   <!-- Modal Rà Soát Bài Lỗi Trước Khi Chấm -->
   <div class="modal-backdrop" id="precheckModal">
     <div class="modal-card modal-review-card" style="max-width:1200px;">
-      <div class="modal-header" style="background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border-bottom: 2px solid #f59e0b;">
+      <div class="modal-header"
+        style="background: linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%); border-bottom: 2px solid #f59e0b;">
         <div style="display:flex; align-items:center; gap:10px;">
           <span style="font-size:1.6rem;">🔍</span>
           <div>
@@ -498,7 +536,8 @@
           </div>
         </div>
         <div style="display:flex; gap:6px; align-items:center;">
-          <span id="precheckProgressBadge" class="badge-tag" style="background:#fef3c7; color:#b45309; font-weight:700; font-size:0.85rem; padding:4px 10px;">
+          <span id="precheckProgressBadge" class="badge-tag"
+            style="background:#fef3c7; color:#b45309; font-weight:700; font-size:0.85rem; padding:4px 10px;">
             Bài lỗi: 1 / 1
           </span>
           <button class="btn btn-outline btn-sm" onclick="window.app.closePrecheckModal()">✕ Đóng</button>
@@ -528,9 +567,12 @@
           <!-- Render dynamically: Tên, SBD, Lớp, Mã đề, Điểm -->
         </div>
         <div style="display:flex; gap:6px; align-items:center;">
-          <button id="btnPrevReview" class="btn btn-outline btn-sm" title="Xem bài trước (Phím mũi tên Trái)">⬅ Bài Trước</button>
-          <button id="btnNextReview" class="btn btn-outline btn-sm" title="Xem bài tiếp theo (Phím mũi tên Phải)">Bài Sau ➡</button>
-          <button id="btnDownloadImage" class="btn btn-outline btn-sm" title="Tải ảnh bài thi này về máy">📥 Tải Ảnh</button>
+          <button id="btnPrevReview" class="btn btn-outline btn-sm" title="Xem bài trước (Phím mũi tên Trái)">⬅ Bài
+            Trước</button>
+          <button id="btnNextReview" class="btn btn-outline btn-sm" title="Xem bài tiếp theo (Phím mũi tên Phải)">Bài
+            Sau ➡</button>
+          <button id="btnDownloadImage" class="btn btn-outline btn-sm" title="Tải ảnh bài thi này về máy">📥 Tải
+            Ảnh</button>
           <button id="btnDeleteCurrentReview" class="btn btn-outline btn-sm"
             style="color:var(--danger); border-color:#fca5a5;" onclick="window.app.deleteCurrentReviewPaper()"
             title="Xóa bài thi này khỏi danh sách">🗑 Xóa Bài Này</button>
@@ -544,6 +586,58 @@
         <span id="reviewModalFooterInfo" style="font-size:0.8rem; color:var(--text-muted)"></span>
         <button class="btn btn-secondary" onclick="window.app.closeReviewModal()">Đóng</button>
       </div>
+    </div>
+  </div>
+
+
+  <!-- MODAL CHẤM BẰNG CAMERA TRỰC TIẾP TOÀN MÀN HÌNH CÓ KHUNG CANH CHUẨN A4 -->
+  <div id="cameraScanModal" class="camera-fullscreen-modal" style="display:none;">
+    <!-- Header: Đóng camera, số bài đã chấm, nút bật đèn flash nếu có -->
+    <div class="camera-fs-header">
+      <button type="button" class="camera-fs-btn" onclick="window.app.closeFullscreenCamera()">✕ Đóng</button>
+      <div class="camera-fs-counter">
+        <span>Đã chấm: </span>
+        <strong id="fsGradedCount">0</strong>
+      </div>
+      <button type="button" id="btnToggleFlash" class="camera-fs-btn" style="display:none;" onclick="window.app.toggleFlash()">⚡ Đèn</button>
+    </div>
+
+    <!-- Video Feed Container -->
+    <div class="camera-fs-viewport">
+      <video id="fsCameraVideo" autoplay playsinline muted></video>
+      <canvas id="fsCameraCanvas" style="display:none;"></canvas>
+
+      <!-- Khung Canh A4 (A4 Viewfinder Guide Frame) -->
+      <div class="a4-guide-overlay">
+        <div class="a4-guide-box">
+          <!-- 4 Góc định vị (L-Brackets) -->
+          <div class="corner-bracket corner-tl"></div>
+          <div class="corner-bracket corner-tr"></div>
+          <div class="corner-bracket corner-bl"></div>
+          <div class="corner-bracket corner-br"></div>
+        </div>
+        <div class="a4-guide-hint">
+          <span class="pulse-dot"></span> Canh 4 ô vuông đen vào 4 góc khung rồi bấm Chụp
+        </div>
+      </div>
+
+      <!-- Thông báo kết quả chấm nhanh nổi lên trên camera (Live Result Toast Overlay) -->
+      <div id="fsLiveResultBox" class="fs-live-result-box" style="display:none;"></div>
+    </div>
+
+    <!-- Footer Controls: Nút chụp tròn lớn (Shutter Button) & Nút nạp ảnh từ thư viện -->
+    <div class="camera-fs-footer">
+      <button type="button" class="camera-fs-side-btn" onclick="document.getElementById('batchImagesInput').click()" title="Nạp ảnh từ máy">
+        🖼️ Thư viện
+      </button>
+
+      <button type="button" id="btnFsShutter" class="camera-fs-shutter-btn" onclick="window.app.captureFromFullscreenCamera()" title="Chụp & Chấm bài">
+        <div class="shutter-inner"></div>
+      </button>
+
+      <button type="button" class="camera-fs-side-btn" onclick="window.app.switchCameraFacing()" id="btnSwitchCamera" title="Đổi camera">
+        🔄 Đổi cam
+      </button>
     </div>
   </div>
 
@@ -573,10 +667,10 @@
   <!-- Scripts Nội bộ Offline 100% -->
   <script src="./lib/xlsx.full.min.js"></script>
   <script src="./lib/jszip.min.js"></script>
-  <script src="./js/omr-engine.js"></script>
-  <script src="./js/excel-handler.js"></script>
-  <script src="./js/export-zip.js"></script>
-  <script src="./js/app-pwa.js"></script>
+  <script src="./js/omr-engine.js?v=2.3"></script>
+  <script src="./js/excel-handler.js?v=2.2"></script>
+  <script src="./js/export-zip.js?v=2.2"></script>
+  <script src="./js/app-pwa.js?v=2.2"></script>
   <script>
     // Đăng ký Service Worker để ứng dụng chạy Offline 100% khi không có mạng
     if ('serviceWorker' in navigator) {
