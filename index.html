@@ -18,7 +18,7 @@
   <link rel="icon" type="image/svg+xml" href="./icons/icon.svg">
 
   <!-- CSS Nội bộ Offline 100% -->
-  <link rel="stylesheet" href="./css/style.css?v=2.7">
+  <link rel="stylesheet" href="./css/style.css?v=2.8">
 </head>
 
 <body>
@@ -273,42 +273,46 @@
           <span class="badge-tag" style="background:#dbeafe; color:#1d4ed8; font-weight:700;">Tự dừng báo chỉnh liền nếu sai SBD/Mã đề</span>
         </div>
 
-        <!-- NÚT CHÍNH: CHỌN TOÀN BỘ ẢNH BÀI THI ĐỂ CHẤM -->
-        <button id="btnPickGalleryBatch" class="btn btn-primary btn-lg"
-          style="width:100%; font-weight:800; font-size:1.15rem; padding:18px 14px; background:linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); box-shadow:0 6px 20px rgba(37,99,235,0.35); border:none; border-radius:14px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:6px; cursor:pointer;"
-          onclick="document.getElementById('batchImagesInput').click()">
-          <div style="display:flex; align-items:center; gap:10px;">
-            <span style="font-size:1.8rem;">📁</span>
-            <span style="font-size:1.12rem; letter-spacing:0.3px;">CHỌN ẢNH BÀI THI ĐỂ CHẤM (30–50 BÀI)</span>
-          </div>
-          <span style="font-size:0.82rem; font-weight:600; opacity:0.95; color:#dbeafe;">
-            (Chọn ảnh từ Thư viện điện thoại hoặc máy tính • Tự dừng soi toàn bộ phiếu nếu sai SBD/Mã đề)
-          </span>
-        </button>
+        <!-- LƯỚI NÚT CHỌN ẢNH & THƯ MỤC CÂN ĐỐI (CHUẨN MOBILE & PC) -->
+        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:10px; margin-bottom:10px;">
+          <button id="btnPickGalleryBatch" type="button" class="btn btn-primary"
+            style="font-weight:800; font-size:0.95rem; padding:14px 10px; background:linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%); box-shadow:0 4px 14px rgba(37,99,235,0.3); border:none; border-radius:12px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; cursor:pointer;"
+            onclick="document.getElementById('batchImagesInput').click()">
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="font-size:1.35rem;">📁</span>
+              <span>CHỌN ẢNH BÀI THI</span>
+            </div>
+            <span style="font-size:0.75rem; font-weight:500; opacity:0.9; color:#dbeafe;">(Từ máy / Thư viện ảnh)</span>
+          </button>
+
+          <button type="button" class="btn btn-outline"
+            style="font-weight:800; font-size:0.95rem; padding:14px 10px; background:#ffffff; border:2px solid #3b82f6; color:#1d4ed8; border-radius:12px; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; cursor:pointer; box-shadow:0 2px 8px rgba(0,0,0,0.04);"
+            onclick="document.getElementById('folderImagesInput').click()">
+            <div style="display:flex; align-items:center; gap:6px;">
+              <span style="font-size:1.35rem;">📂</span>
+              <span>CHỌN THƯ MỤC ẢNH</span>
+            </div>
+            <span style="font-size:0.75rem; font-weight:500; color:#64748b;">(Quét toàn bộ thư mục)</span>
+          </button>
+        </div>
+
+        <div style="display:flex; justify-content:flex-end; margin-bottom:8px;">
+          <button id="btnScanDemoSample" type="button" class="btn btn-outline btn-sm"
+            style="font-weight:600; font-size:0.8rem; background:#f8fafc; border-color:#cbd5e1; color:#475569;"
+            onclick="window.app.scanSampleDemoSheet()">
+            <span>⚡ Chấm bài mẫu thử mô phỏng</span>
+          </button>
+        </div>
 
         <!-- Input ẩn chọn ảnh -->
         <input type="file" id="batchImagesInput" multiple accept="image/*" style="display:none">
         <input type="file" id="folderImagesInput" webkitdirectory directory multiple style="display:none">
 
-        <!-- Các nút nạp phụ trợ -->
-        <div style="display:grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap:8px; margin-top:12px;">
-          <button class="btn btn-outline btn-sm" onclick="document.getElementById('folderImagesInput').click()"
-            style="font-weight:700; background:#ffffff; border-color:#cbd5e1;"
-            title="Chọn cả thư mục bài thi trên máy tính">
-            <span>📂</span> Chọn cả thư mục ảnh
-          </button>
-          <button id="btnScanDemoSample" class="btn btn-outline btn-sm"
-            style="font-weight:700; background:#ffffff; border-color:#cbd5e1;"
-            onclick="window.app.scanSampleDemoSheet()">
-            <span>⚡</span> Chấm bài mẫu thử
-          </button>
-        </div>
-
         <!-- Hướng dẫn quy trình ngắn gọn -->
-        <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:10px; padding:10px 14px; margin-top:12px; font-size:0.83rem; color:#1e40af; line-height:1.45;">
+        <div style="background:#eff6ff; border:1px solid #bfdbfe; border-radius:10px; padding:10px 14px; margin-top:8px; font-size:0.83rem; color:#1e40af; line-height:1.45;">
           <strong>💡 Quy trình chấm bài thi:</strong><br>
           • <strong>Bước 1:</strong> Thầy/cô dùng camera điện thoại (chế độ <em>Quét tài liệu / Scan</em>) chụp sẵn xấp bài thi của cả lớp.<br>
-          • <strong>Bước 2:</strong> Bấm nút xanh to ở trên ➡ Chọn toàn bộ ảnh vừa chụp để hệ thống chấm tự động.<br>
+          • <strong>Bước 2:</strong> Bấm nút <strong>📁 Chọn ảnh bài thi</strong> ➡ Chọn toàn bộ ảnh vừa chụp để hệ thống chấm tự động.<br>
           • <strong>Bước 3:</strong> Nếu bài thi học sinh tô sai/chưa tô SBD hoặc Mã đề, hệ thống sẽ <strong>tự dừng và hiện toàn bộ phiếu A4 cho phép phóng to thu nhỏ soi chữ viết tay để sửa ngay</strong>!
         </div>
 
@@ -323,7 +327,7 @@
               style="width:0%; height:100%; background:linear-gradient(90deg, #10b981, #059669); border-radius:10px; transition:width 0.2s ease;">
             </div>
           </div>
-          <div id="gradingCurrentStatus" style="font-size:0.8rem; color:#065f46; font-style:italic; margin-top:6px; min-height:1.2rem;">
+          <div id="gradingCurrentStatus" style="font-size:0.8rem; color:#065f46; font-style:italic; margin-top:6px; min-height:1.2rem; word-break:break-all; overflow-wrap:anywhere;">
           </div>
         </div>
 
@@ -649,10 +653,10 @@
   <!-- Scripts Nội bộ Offline 100% -->
   <script src="./lib/xlsx.full.min.js"></script>
   <script src="./lib/jszip.min.js"></script>
-  <script src="./js/omr-engine.js?v=2.7"></script>
-  <script src="./js/excel-handler.js?v=2.7"></script>
-  <script src="./js/export-zip.js?v=2.7"></script>
-  <script src="./js/app-pwa.js?v=2.7"></script>
+  <script src="./js/omr-engine.js?v=2.8"></script>
+  <script src="./js/excel-handler.js?v=2.8"></script>
+  <script src="./js/export-zip.js?v=2.8"></script>
+  <script src="./js/app-pwa.js?v=2.8"></script>
   <script>
     // Đăng ký Service Worker để ứng dụng chạy Offline 100% khi không có mạng
     if ('serviceWorker' in navigator) {

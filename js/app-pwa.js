@@ -1159,7 +1159,7 @@ class AppController {
     }
 
     body.innerHTML = `
-      <div class="review-grid-layout" style="height:calc(88vh - 120px);">
+      <div class="review-grid-layout">
         <!-- Cột Trái: Toàn bộ ảnh trang A4 kèm thanh thu phóng % -->
         <div class="review-image-pane">
           <div class="review-image-toolbar" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:6px;">
@@ -1179,7 +1179,7 @@ class AppController {
             </div>
           </div>
           <div class="review-image-scroll" id="precheckImgContainer" style="overflow:auto; height:calc(100% - 44px); background:#1e293b; text-align:center; padding:10px;">
-            <img id="precheckPaperImg" src="${paper.cleanImage}" 
+            <img id="precheckPaperImg" src="${paper.cleanImage || paper.previewImage || ''}" 
                  style="transform: scale(${this.state.currentPrecheckZoom || 1.0}); transform-origin: top center; transition: transform 0.15s ease; max-width:100%; box-shadow:0 6px 20px rgba(0,0,0,0.5);" />
           </div>
         </div>
@@ -4242,11 +4242,14 @@ class AppController {
       const counterEl = document.getElementById('fsGradedCount');
       if (counterEl) counterEl.textContent = this.state.gradedList.length;
 
-      const sbdClean = String(result.sbd || '').trim();
-      const isSbdInvalid = !sbdClean || sbdClean.includes('?') || sbdClean.includes('_') || sbdClean.length < 8 || sbdClean === '00000000' || sbdClean === '________';
-      const isExamCodeInvalid = !result.examCode || !this.state.activeExamKeys[result.examCode] || result.examCode === '???';
+      const val = this.validateSubmissionRules(result);
+      if (val.isInvalid) {
+        result.hasSbdError = val.hasSbdError;
+        result.sbdErrorMsg = val.sbdErrorMsg;
+        result.hasExamCodeError = val.hasExamCodeError;
+        result.examCodeErrorMsg = val.examCodeErrorMsg;
+        result.isInvalid = true;
 
-      if (isSbdInvalid || isExamCodeInvalid) {
         if (liveResultBox) liveResultBox.style.display = 'none';
         this.openFastFixModal(result);
       } else {
@@ -4315,11 +4318,14 @@ class AppController {
       // Chuyển sang Tab Chấm bài để người dùng nhìn thấy kết quả
       this.switchTab('tab-scan');
 
-      const sbdClean = String(result.sbd || '').trim();
-      const isSbdInvalid = !sbdClean || sbdClean.includes('?') || sbdClean.includes('_') || sbdClean.length < 8 || sbdClean === '00000000' || sbdClean === '________';
-      const isExamCodeInvalid = !result.examCode || !this.state.activeExamKeys[result.examCode] || result.examCode === '???';
+      const val = this.validateSubmissionRules(result);
+      if (val.isInvalid) {
+        result.hasSbdError = val.hasSbdError;
+        result.sbdErrorMsg = val.sbdErrorMsg;
+        result.hasExamCodeError = val.hasExamCodeError;
+        result.examCodeErrorMsg = val.examCodeErrorMsg;
+        result.isInvalid = true;
 
-      if (isSbdInvalid || isExamCodeInvalid) {
         // Có lỗi tô SBD hoặc Mã đề -> Mở popup sửa nhanh ngay lúc chụp
         this.openFastFixModal(result, 1, 1);
       } else {
@@ -4333,6 +4339,76 @@ class AppController {
       console.error("Lỗi khi xử lý ảnh chụp điện thoại:", err);
       this.showToast("Không nhận diện được bài thi: " + (err.message || "Ảnh mờ hoặc không đủ 4 góc định vị"), "danger");
     }
+  }
+
+  /**
+   * Bộ quy tắc kiểm tra nghiêm ngặt tính hợp lệ của Số Báo Danh và Mã Đề Thi
+   * Đồng bộ 100% chuẩn kiểm tra từ TEP_CHAY_APP (Phương án 1)
+   */
+  validateSubmissionRules(scannedOrResult) {
+    if (!scannedOrResult) {
+      return { isInvalid: false, hasSbdError: false, sbdErrorMsg: '', hasExamCodeError: false, examCodeErrorMsg: '' };
+    }
+    const activeKeys = this.state.activeExamKeys || {};
+    const stuList = this.state.studentList || [];
+
+    // 1. Kiểm tra Số Báo Danh (8 cột, mỗi cột chỉ tô tối đa 1 ô)
+    let hasSbdError = false;
+    let sbdErrorMsg = '';
+    const rawSbd = String(scannedOrResult.sbd || '').trim();
+
+    if (!rawSbd || rawSbd === '' || rawSbd === '________' || rawSbd === '00000000') {
+      hasSbdError = true;
+      sbdErrorMsg = 'Chưa tô ô Số báo danh';
+    } else if (rawSbd.includes('X')) {
+      hasSbdError = true;
+      sbdErrorMsg = 'Vi phạm: Tô đúp ô trên cột Số báo danh (mỗi cột chỉ được tô 1 ô)';
+    } else if (rawSbd.includes('_')) {
+      const shadedCount = rawSbd.replace(/_/g, '').length;
+      hasSbdError = true;
+      sbdErrorMsg = `Tô thiếu chữ số SBD (mới tô ${shadedCount}/8 cột hoặc có ô tô quá mờ: ${rawSbd})`;
+    } else if (rawSbd.length < 8) {
+      hasSbdError = true;
+      sbdErrorMsg = `Tô thiếu chữ số SBD (mới tô ${rawSbd.length}/8 số)`;
+    } else if (stuList.length > 0) {
+      const found = stuList.find(s => String(s.sbd).trim() === rawSbd);
+      if (!found) {
+        hasSbdError = true;
+        sbdErrorMsg = `SBD ${rawSbd} không có trong danh sách học sinh`;
+      }
+    }
+
+    // 2. Kiểm tra Mã Đề Thi (Mã 4 số hoặc Mã 3 số tô 3 cột đầu; mỗi cột chỉ tô tối đa 1 ô)
+    let hasExamCodeError = false;
+    let examCodeErrorMsg = '';
+    const rawCode = String(scannedOrResult.examCode || '').trim();
+
+    if (!rawCode || rawCode === '' || rawCode === '____' || rawCode === '___' || rawCode === '000' || rawCode === '0000') {
+      hasExamCodeError = true;
+      examCodeErrorMsg = 'Chưa tô ô Mã đề thi (hoặc tô quá mờ cả 4 cột)';
+    } else if (rawCode.includes('X')) {
+      hasExamCodeError = true;
+      examCodeErrorMsg = 'Vi phạm: Tô đúp ô trên cột Mã đề thi (mỗi cột chỉ được tô 1 ô)';
+    } else if (rawCode.includes('_')) {
+      hasExamCodeError = true;
+      examCodeErrorMsg = `Tô thiếu cột hoặc có ô tô quá mờ trên Mã đề: ${rawCode}`;
+    } else if (rawCode.length !== 3 && rawCode.length !== 4) {
+      hasExamCodeError = true;
+      examCodeErrorMsg = `Mã đề phải có 3 hoặc 4 chữ số (hiện tại: ${rawCode.length} chữ số)`;
+    } else if (!activeKeys[rawCode]) {
+      const availableCodes = Object.keys(activeKeys).join(', ');
+      hasExamCodeError = true;
+      examCodeErrorMsg = `Mã đề '${rawCode}' không có trong bộ đáp án đang chấm (chỉ có: ${availableCodes || 'chưa có đáp án'})`;
+    }
+
+    const isInvalid = hasSbdError || hasExamCodeError;
+    return {
+      isInvalid,
+      hasSbdError,
+      sbdErrorMsg,
+      hasExamCodeError,
+      examCodeErrorMsg
+    };
   }
 
   /**
@@ -4401,14 +4477,19 @@ class AppController {
       if (!result) continue;
 
       // Kiểm tra quy cách: SBD và Mã đề
-      const sbdClean = String(result.sbd || '').trim();
-      const isSbdInvalid = !sbdClean || sbdClean.includes('?') || sbdClean.includes('_') || sbdClean.length < 8 || sbdClean === '00000000' || sbdClean === '________';
-      const isExamCodeInvalid = !result.examCode || !this.state.activeExamKeys[result.examCode] || result.examCode === '???';
+      const val = this.validateSubmissionRules(result);
 
-      if (isSbdInvalid || isExamCodeInvalid) {
+      if (val.isInvalid) {
+        result.hasSbdError = val.hasSbdError;
+        result.sbdErrorMsg = val.sbdErrorMsg;
+        result.hasExamCodeError = val.hasExamCodeError;
+        result.examCodeErrorMsg = val.examCodeErrorMsg;
+        result.isInvalid = true;
+
         // TỰ ĐỘNG DỪNG VÀ BÁO CHỈNH LIỀN!
         if (progStatus) {
-          progStatus.innerHTML = `<span style="color:#b45309; font-weight:800;">⏸️ TẠM DỪNG BÀI ${currentIdx}/${totalCount}: Học sinh tô sai/chưa tô SBD hoặc Mã đề! Đang mở hộp thoại chỉnh ngay...</span>`;
+          const reasonText = [val.sbdErrorMsg, val.examCodeErrorMsg].filter(Boolean).join(' & ');
+          progStatus.innerHTML = `<span style="color:#b45309; font-weight:800;">⏸️ TẠM DỪNG BÀI ${currentIdx}/${totalCount}: ${reasonText}! Đang mở hộp thoại chỉnh ngay...</span>`;
         }
         if (window.omrEngine && window.omrEngine.playBeep) {
           window.omrEngine.playBeep(false);
@@ -4451,6 +4532,124 @@ class AppController {
     });
   }
 
+  setupFastFixViewer(imageUrl) {
+    const container = document.getElementById('fastFixViewerContainer');
+    const img = document.getElementById('fastFixFullImage');
+    const badge = document.getElementById('fastFixZoomBadge');
+    if (!img) return;
+
+    this.state.fastFixZoom = 1.0;
+    img.style.transform = 'scale(1.0)';
+    img.style.transformOrigin = 'top center';
+    if (badge) badge.textContent = '100%';
+
+    if (imageUrl) {
+      img.src = imageUrl;
+      img.style.display = 'inline-block';
+    } else {
+      img.removeAttribute('src');
+      img.style.display = 'none';
+    }
+
+    if (container) {
+      container.scrollTop = 0;
+      container.scrollLeft = 0;
+    }
+
+    this.initFastFixViewerGestures();
+  }
+
+  updateFastFixViewerTransform() {
+    const img = document.getElementById('fastFixFullImage');
+    const badge = document.getElementById('fastFixZoomBadge');
+    const zoom = this.state.fastFixZoom || 1.0;
+    if (img) {
+      img.style.transform = `scale(${zoom})`;
+    }
+    if (badge) {
+      badge.textContent = `${Math.round(zoom * 100)}%`;
+    }
+  }
+
+  zoomFastFix(delta) {
+    const img = document.getElementById('fastFixFullImage');
+    const badge = document.getElementById('fastFixZoomBadge');
+    if (!img) return;
+    let cur = this.state.fastFixZoom || 1.0;
+    cur = Math.max(0.6, Math.min(3.5, Math.round((cur + delta) * 10) / 10));
+    this.state.fastFixZoom = cur;
+    img.style.transform = `scale(${cur})`;
+    if (badge) badge.textContent = `${Math.round(cur * 100)}%`;
+  }
+
+  resetFastFixZoom() {
+    const container = document.getElementById('fastFixViewerContainer');
+    const img = document.getElementById('fastFixFullImage');
+    const badge = document.getElementById('fastFixZoomBadge');
+    if (!img) return;
+    this.state.fastFixZoom = 1.0;
+    img.style.transform = 'scale(1.0)';
+    if (badge) badge.textContent = '100%';
+    if (container) {
+      container.scrollTop = 0;
+      container.scrollLeft = 0;
+    }
+  }
+
+  focusFastFixHeader() {
+    const container = document.getElementById('fastFixViewerContainer');
+    const img = document.getElementById('fastFixFullImage');
+    const badge = document.getElementById('fastFixZoomBadge');
+    if (!img) return;
+    this.state.fastFixZoom = 1.6;
+    img.style.transform = 'scale(1.6)';
+    if (badge) badge.textContent = '160%';
+    if (container) {
+      container.scrollTop = 0;
+    }
+  }
+
+  initFastFixViewerGestures() {
+    const container = document.getElementById('fastFixViewerContainer');
+    if (!container || container._gesturesInitialized) return;
+    container._gesturesInitialized = true;
+
+    let initialPinchDist = 0;
+    let initialPinchScale = 1;
+
+    // Zoom bằng con lăn chuột (trên PC/laptop)
+    container.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const delta = e.deltaY < 0 ? 0.2 : -0.2;
+      this.zoomFastFix(delta);
+    }, { passive: false });
+
+    // Thu phóng bằng 2 ngón tay (Pinch to zoom trên điện thoại)
+    container.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 2) {
+        const t1 = e.touches[0];
+        const t2 = e.touches[1];
+        initialPinchDist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+        initialPinchScale = this.state.fastFixZoom || 1.0;
+      }
+    }, { passive: true });
+
+    container.addEventListener('touchmove', (e) => {
+      if (e.touches.length === 2) {
+        e.preventDefault();
+        const t1 = e.touches[0];
+        const t2 = e.touches[1];
+        const dist = Math.hypot(t2.clientX - t1.clientX, t2.clientY - t1.clientY);
+        if (initialPinchDist > 0) {
+          const factor = dist / initialPinchDist;
+          let newScale = Math.max(0.6, Math.min(3.5, Math.round(initialPinchScale * factor * 10) / 10));
+          this.state.fastFixZoom = newScale;
+          this.updateFastFixViewerTransform();
+        }
+      }
+    }, { passive: false });
+  }
+
   openFastFixModal(paper, currentNum, totalNum) {
     this.state.currentFastFixPaper = paper;
     this.state.fastFixSelectedCode = paper.examCode || '';
@@ -4458,7 +4657,10 @@ class AppController {
     const modal = document.getElementById('fastFixModal');
     if (!modal) return;
 
-    // Cập nhật tiêu đề hiển thị số thứ tự bài đang chỉnh
+    // 1. Mở modal trước để container hiển thị đầy đủ trong DOM
+    modal.classList.add('active');
+
+    // 2. Cập nhật tiêu đề hiển thị số thứ tự bài đang chỉnh
     const titleEl = document.getElementById('fastFixModalTitle');
     if (titleEl) {
       if (currentNum && totalNum) {
@@ -4470,46 +4672,32 @@ class AppController {
 
     const subtitleEl = document.getElementById('fastFixModalSubtitle');
     if (subtitleEl) {
+      const val = this.validateSubmissionRules(paper);
       const errReason = [];
-      const sbdClean = String(paper.sbd || '').trim();
-      if (!sbdClean || sbdClean.includes('?') || sbdClean.includes('_') || sbdClean.length < 8 || sbdClean === '00000000' || sbdClean === '________') {
-        errReason.push("Chưa tô / tô thiếu SBD");
-      }
-      if (!paper.examCode || !this.state.activeExamKeys[paper.examCode] || paper.examCode === '???') {
-        errReason.push("Chưa tô / sai Mã đề");
-      }
-      subtitleEl.innerHTML = `<strong style="color:#b91c1c;">Phát hiện: ${errReason.join(' & ')}.</strong> Soi chữ viết tay bên dưới để bấm chọn sửa:`;
+      if (val.hasSbdError) errReason.push(val.sbdErrorMsg);
+      if (val.hasExamCodeError) errReason.push(val.examCodeErrorMsg);
+      const text = errReason.length > 0 ? errReason.join(' & ') : 'Chưa tô hoặc sai quy cách SBD / Mã đề';
+      subtitleEl.innerHTML = `<strong style="color:#b91c1c;">Phát hiện: ${text}.</strong> Soi toàn bộ phiếu A4 bên dưới để bấm chọn sửa:`;
     }
 
-    // Hiển thị phần đầu phiếu viết tay của học sinh (Họ tên, SBD, Mã đề viết mực xanh)
-    const previewCanvas = document.getElementById('fastFixHeaderCanvas');
-    if (previewCanvas && (paper.cleanImage || paper.previewImage)) {
-      const img = new Image();
-      img.onload = () => {
-        // Cắt 26% trên cùng của bài thi (khu vực viết tay thông tin)
-        const cropH = Math.round(img.height * 0.26);
-        previewCanvas.width = img.width;
-        previewCanvas.height = cropH;
-        const ctx = previewCanvas.getContext('2d');
-        ctx.drawImage(img, 0, 0, img.width, cropH, 0, 0, img.width, cropH);
-      };
-      img.src = paper.cleanImage || paper.previewImage;
-    }
+    // 3. Hiển thị TOÀN BỘ PHIẾU A4 và cho phép Zoom & Cuộn mượt mà
+    const sheetImage = paper.cleanImage || paper.previewImage || '';
+    this.setupFastFixViewer(sheetImage);
 
-    // Điền sẵn SBD nhận diện được
+    // 4. Điền sẵn SBD nhận diện được
     const sbdInput = document.getElementById('fastFixSbdInput');
     if (sbdInput) {
       const rawSbd = String(paper.sbd || '').replace(/[^0-9]/g, '');
       sbdInput.value = rawSbd;
     }
 
-    // Họ tên học sinh
+    // 5. Họ tên học sinh
     const nameInput = document.getElementById('fastFixNameInput');
     if (nameInput) {
       nameInput.value = (paper.name && !paper.name.startsWith('Học sinh SBD')) ? paper.name : '';
     }
 
-    // Hiển thị danh sách nút mã đề để giáo viên bấm chọn 1 chạm
+    // 6. Hiển thị danh sách nút mã đề để giáo viên bấm chọn 1 chạm
     const codesContainer = document.getElementById('fastFixExamCodesList');
     if (codesContainer) {
       const availableCodes = Object.keys(this.state.activeExamKeys || {});
@@ -4528,13 +4716,11 @@ class AppController {
       }
     }
 
-    // Ô input mã đề
+    // 7. Ô input mã đề
     const codeInput = document.getElementById('fastFixExamCodeInput');
     if (codeInput) {
       codeInput.value = paper.examCode || '';
     }
-
-    modal.classList.add('active');
   }
 
   selectFastFixExamCode(code) {
