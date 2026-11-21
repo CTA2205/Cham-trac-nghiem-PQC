@@ -3,7 +3,7 @@
  * Tự động lưu cache toàn bộ ứng dụng để giáo viên mang máy vào phòng thi không có mạng vẫn chạy 100%.
  */
 
-const CACHE_NAME = 'cham-trac-nghiem-pqc-v9';
+const CACHE_NAME = 'cham-trac-nghiem-pqc-v10';
 
 const ASSETS_TO_CACHE = [
   './',
@@ -17,7 +17,9 @@ const ASSETS_TO_CACHE = [
   './js/app-pwa.js',
   './lib/xlsx.full.min.js',
   './lib/jszip.min.js',
-  './MAU%20DAP%20AN.xlsx'
+  './MAU%20DAP%20AN.xlsx',
+  './DANH_SACH_HOC_SINH.xlsx',
+  './DANH%20SACH%20H%E1%BB%8CC%20SINH.xlsx'
 ];
 
 // Cài đặt Service Worker và nạp toàn bộ tài nguyên vào Cache

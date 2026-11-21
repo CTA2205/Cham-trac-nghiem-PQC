@@ -115,10 +115,49 @@ class ExcelHandler {
   }
 
   /**
-   * Đọc tệp DANH SACH HỌC SINH.xlsx
+   * Chuẩn hóa thông minh Số Báo Danh (8 chữ số theo chuẩn Bộ GD&ĐT):
+   * Tự động sửa các lỗi phổ biến (01200004 -> 12000004, 1200004 -> 12000004, 1200030 -> 12000030, 4 -> 12000004)
+   */
+  normalizeSbd(rawInput, defaultGrade = '12') {
+    if (!rawInput) return '';
+    let s = String(rawInput).trim().replace(/[^0-9]/g, '');
+    if (!s) return '';
+
+    // Sửa lỗi tiền tố '0' đứng trước khối do padStart cũ: 01200004 -> 12000004
+    if (s.length === 8 && (s.startsWith('010') || s.startsWith('011') || s.startsWith('012'))) {
+      const grade = s.substring(1, 3);
+      const num = s.substring(3).replace(/^0+/, '') || '0';
+      return grade + num.padStart(6, '0');
+    }
+
+    if (s.length === 8) return s;
+
+    const g = defaultGrade ? String(defaultGrade).padStart(2, '0').slice(-2) : '12';
+    const prefixMatch = s.match(/^(10|11|12)(.*)$/);
+    if (prefixMatch && s.length < 8) {
+      const prefix = prefixMatch[1];
+      const rest = prefixMatch[2];
+      const numPart = rest.replace(/^0+/, '') || '0';
+      return prefix + numPart.padStart(6, '0');
+    }
+
+    if (s.length <= 4) {
+      const numPart = s.replace(/^0+/, '') || s;
+      return g + numPart.padStart(6, '0');
+    }
+
+    if (s.length < 8) {
+      return s.padStart(8, '0');
+    }
+
+    return s.slice(0, 8);
+  }
+
+  /**
+   * Đọc tệp DANH SACH HỌC SINH.xlsx (Chấp nhận cả File và ArrayBuffer)
    */
   async readStudentListWorkbook(file) {
-    const data = await file.arrayBuffer();
+    const data = (file instanceof ArrayBuffer) ? file : (file.arrayBuffer ? await file.arrayBuffer() : file);
     const wb = XLSX.read(data, { type: 'array' });
     const sheet = wb.Sheets[wb.SheetNames[0]];
     const rows = XLSX.utils.sheet_to_json(sheet, { header: 1, defval: "" });
@@ -146,11 +185,12 @@ class ExcelHandler {
     for (let r = startRow; r < rows.length; r++) {
       const row = rows[r];
       if (!row || !row[sbdCol]) continue;
-      const sbd = String(row[sbdCol]).trim();
+      let sbd = String(row[sbdCol]).trim();
       const name = String(row[nameCol] || "").trim();
       const className = String(row[classCol] || "").trim();
 
       if (sbd && !isNaN(parseInt(sbd, 10))) {
+        if (sbd.length < 8) sbd = this.normalizeSbd(sbd, '12');
         students.push({ sbd, name, className });
       }
     }
@@ -246,10 +286,11 @@ class ExcelHandler {
         return Number(Number(val).toFixed(2));
       };
 
-      // Sắp xếp bài thi theo Số báo danh (cột B) từ nhỏ đến lớn
+      // Sắp xếp bài thi theo Số báo danh (cột B) từ nhỏ đến lớn (Chuẩn hóa chuẩn 8 số Bộ GD&ĐT)
+      const defaultG = examMeta.grade || '12';
       const sortedItems = [...items].sort((a, b) => {
-        const sbdA = String(a.sbd || '').trim();
-        const sbdB = String(b.sbd || '').trim();
+        const sbdA = this.normalizeSbd(a.sbd, defaultG) || String(a.sbd || '').trim();
+        const sbdB = this.normalizeSbd(b.sbd, defaultG) || String(b.sbd || '').trim();
 
         const numA = parseInt(sbdA.replace(/\D/g, ''), 10);
         const numB = parseInt(sbdB.replace(/\D/g, ''), 10);
@@ -270,9 +311,10 @@ class ExcelHandler {
       });
 
       sortedItems.forEach((item, idx) => {
+        const finalSbd = this.normalizeSbd(item.sbd, defaultG) || item.sbd || "";
         data.push([
           idx + 1,
-          item.sbd || "",
+          finalSbd,
           item.name || "",
           item.className || examMeta.className || "",
           item.examCode || "",

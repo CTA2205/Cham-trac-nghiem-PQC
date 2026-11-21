@@ -445,15 +445,20 @@
 
         <!-- 2. Sửa Số Báo Danh (8 số) -->
         <div style="margin-bottom:10px;">
-          <label style="font-size:0.8rem; font-weight:700; color:#1e1b4b; display:block; margin-bottom:4px;">
-            1. Số Báo Danh (8 chữ số):
-          </label>
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <label style="font-size:0.8rem; font-weight:700; color:#1e1b4b; margin:0;">
+              1. Số Báo Danh (8 chữ số):
+            </label>
+            <span id="fastFixSbdStatus" style="font-size:0.75rem; font-weight:700; color:#16a34a;"></span>
+          </div>
           <div style="display:grid; grid-template-columns: 1.1fr 1fr; gap:8px;">
-            <input type="text" id="fastFixSbdInput" maxlength="8" class="form-control" placeholder="00012345"
+            <input type="text" id="fastFixSbdInput" maxlength="8" class="form-control" placeholder="120000xx"
               style="font-family:monospace; font-weight:800; font-size:1.15rem; text-align:center; border:2px solid #6366f1; letter-spacing:2px;">
-            <input type="text" id="fastFixNameInput" class="form-control" placeholder="Họ tên (tùy chọn)..."
+            <input type="text" id="fastFixNameInput" class="form-control" placeholder="Họ tên học sinh..."
               style="font-size:0.85rem; font-weight:600;">
           </div>
+          <!-- Vùng gợi ý chọn nhanh học sinh từ Danh sách lớp -->
+          <div id="fastFixStudentDrawer" style="display:none; max-height:130px; overflow-y:auto; background:#f8fafc; border:1px solid #cbd5e1; border-radius:6px; padding:4px; margin-top:6px;"></div>
         </div>
 
         <!-- 3. Chọn Mã Đề Thi (Chạm 1 lần để chọn) -->
@@ -653,10 +658,10 @@
   <!-- Scripts Nội bộ Offline 100% -->
   <script src="./lib/xlsx.full.min.js"></script>
   <script src="./lib/jszip.min.js"></script>
-  <script src="./js/omr-engine.js?v=2.9"></script>
-  <script src="./js/excel-handler.js?v=2.9"></script>
-  <script src="./js/export-zip.js?v=2.9"></script>
-  <script src="./js/app-pwa.js?v=2.9"></script>
+  <script src="./js/omr-engine.js?v=2.10"></script>
+  <script src="./js/excel-handler.js?v=2.10"></script>
+  <script src="./js/export-zip.js?v=2.10"></script>
+  <script src="./js/app-pwa.js?v=2.10"></script>
   <script>
     // Đăng ký Service Worker để ứng dụng chạy Offline 100% khi không có mạng
     if ('serviceWorker' in navigator) {

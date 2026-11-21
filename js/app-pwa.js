@@ -94,6 +94,47 @@ class AppController {
     };
   }
 
+  /**
+   * Chuẩn hóa thông minh Số Báo Danh (8 chữ số theo chuẩn Bộ GD&ĐT):
+   * Tự động sửa lỗi 0 đứng trước (01200004 -> 12000004)
+   * Tự động sửa thiếu số 0 ở giữa khi gõ 1200004 -> 12000004, 1200030 -> 12000030, 1200041 -> 12000041
+   * Tự động hoàn thiện khi chỉ gõ số thứ tự lẻ (4 -> 12000004)
+   */
+  normalizeSbd(rawInput, defaultGrade = '12') {
+    if (!rawInput) return '';
+    let s = String(rawInput).trim().replace(/[^0-9]/g, '');
+    if (!s) return '';
+
+    // Sửa lỗi tiền tố '0' đứng trước khối do padStart cũ: 01200004 -> 12000004
+    if (s.length === 8 && (s.startsWith('010') || s.startsWith('011') || s.startsWith('012'))) {
+      const grade = s.substring(1, 3);
+      const num = s.substring(3).replace(/^0+/, '') || '0';
+      return grade + num.padStart(6, '0');
+    }
+
+    if (s.length === 8) return s;
+
+    const g = defaultGrade ? String(defaultGrade).padStart(2, '0').slice(-2) : '12';
+    const prefixMatch = s.match(/^(10|11|12)(.*)$/);
+    if (prefixMatch && s.length < 8) {
+      const prefix = prefixMatch[1];
+      const rest = prefixMatch[2];
+      const numPart = rest.replace(/^0+/, '') || '0';
+      return prefix + numPart.padStart(6, '0');
+    }
+
+    if (s.length <= 4) {
+      const numPart = s.replace(/^0+/, '') || s;
+      return g + numPart.padStart(6, '0');
+    }
+
+    if (s.length < 8) {
+      return s.padStart(8, '0');
+    }
+
+    return s.slice(0, 8);
+  }
+
   async init() {
     await this.loadPersistedState();
     this.bindEvents();
@@ -137,6 +178,29 @@ class AppController {
           this.state.gradedList = session.gradedList.filter(item =>
             !(item.id && String(item.id).startsWith('sim_'))
           );
+          // Tự động chữa lành các bài thi từng bị lưu sai tiền tố 0 (ví dụ 01200004 -> 12000004)
+          let healedCount = 0;
+          const stuList = this.state.studentList || [];
+          this.state.gradedList.forEach(item => {
+            const sbd = String(item.sbd || '').trim();
+            if (/^0(10|11|12)\d{5}$/.test(sbd)) {
+              const fixedSbd = this.normalizeSbd(sbd, this.state.examMeta?.grade || '12');
+              item.sbd = fixedSbd;
+              if (item.scannedData) item.scannedData.sbd = fixedSbd;
+              if (item.name && item.name.includes(sbd)) {
+                item.name = item.name.replace(sbd, fixedSbd);
+              }
+              const match = stuList.find(s => String(s.sbd).trim() === fixedSbd);
+              if (match) {
+                item.name = match.name;
+                item.className = match.className || item.className;
+              }
+              healedCount++;
+            }
+          });
+          if (healedCount > 0) {
+            console.log(`Đã tự động chữa lành ${healedCount} bài thi có SBD lỗi tiền tố 0.`);
+          }
         } else {
           this.state.gradedList = [];
         }
@@ -331,6 +395,27 @@ class AppController {
     const btnFastFixConfirm = document.getElementById('btnFastFixConfirm');
     if (btnFastFixConfirm) {
       btnFastFixConfirm.addEventListener('click', () => this.confirmFastFix());
+    }
+
+    // Lắng nghe sự kiện gõ SBD trong popup sửa nhanh
+    const fastFixSbd = document.getElementById('fastFixSbdInput');
+    if (fastFixSbd) {
+      fastFixSbd.addEventListener('input', (e) => {
+        this.updateFastFixStudentSuggestions(e.target.value);
+      });
+      fastFixSbd.addEventListener('blur', (e) => {
+        const val = e.target.value.trim();
+        const norm = this.normalizeSbd(val, this.state.examMeta?.grade || '12');
+        if (norm && norm.length === 8) {
+          e.target.value = norm;
+          const nameInput = document.getElementById('fastFixNameInput');
+          if (nameInput && (!nameInput.value || nameInput.value.startsWith('Học sinh SBD'))) {
+            const stu = (this.state.studentList || []).find(s => String(s.sbd).trim() === norm);
+            if (stu) nameInput.value = stu.name;
+          }
+        }
+        this.updateFastFixStudentSuggestions(e.target.value);
+      });
     }
 
     // Nút chấm thử 1 bài mẫu ngay
@@ -589,7 +674,30 @@ class AppController {
     this.updateSourceUI();
     this.renderAnswerKeyEditor();
 
-    // Tab Danh Sách học sinh để trống hoàn toàn theo yêu cầu người dùng, khi đính kèm file thì add vào
+    // Tự động nạp DANH SACH HOC SINH.xlsx nếu có sẵn và studentList đang trống
+    if (!this.state.studentList || this.state.studentList.length === 0) {
+      const studentFilesToTry = [
+        './DANH_SACH_HOC_SINH.xlsx',
+        './DANH%20SACH%20H%E1%BB%8CC%20SINH.xlsx'
+      ];
+      for (const sf of studentFilesToTry) {
+        try {
+          const resp = await fetch(sf);
+          if (resp.ok) {
+            const buf = await resp.arrayBuffer();
+            const list = await window.excelHandler.readStudentListWorkbook(buf);
+            if (list && list.length > 0) {
+              this.state.studentList = list;
+              console.log(`Đã tự động nạp ${list.length} học sinh từ ${sf}`);
+              break;
+            }
+          }
+        } catch (e) {
+          // Thử file tiếp theo
+        }
+      }
+    }
+
     if (!this.state.studentList) {
       this.state.studentList = [];
     }
@@ -1318,10 +1426,8 @@ class AppController {
       return;
     }
 
-    if (/^\d+$/.test(newSbd) && newSbd.length < 8) {
-      newSbd = newSbd.padStart(8, '0');
-      inputSbd.value = newSbd;
-    }
+    newSbd = this.normalizeSbd(newSbd, this.state.examMeta?.grade || '12');
+    inputSbd.value = newSbd;
 
     if (!newCode) {
       this.showToast("Vui lòng chọn Mã đề thi!", "warning");
@@ -3800,20 +3906,22 @@ class AppController {
     const inputCode = document.getElementById('editReviewExamCode');
     if (!inputSbd || !inputCode) return;
 
-    let newSbd = inputSbd.value.trim();
+    let rawSbd = inputSbd ? inputSbd.value.trim().replace(/[^0-9]/g, '') : '';
+    let newSbd = rawSbd;
+    if (newSbd.length === 8 && (newSbd.startsWith('010') || newSbd.startsWith('011') || newSbd.startsWith('012'))) {
+      const grade = newSbd.substring(1, 3);
+      const num = newSbd.substring(3).replace(/^0+/, '') || '0';
+      newSbd = grade + num.padStart(6, '0');
+    }
+
     let newExamCode = inputCode.value.trim();
 
-    if (!newSbd) {
-      this.showToast("Vui lòng nhập Số báo danh!", "warning");
+    if (!newSbd || newSbd.length !== 8) {
+      this.showToast(`Số báo danh phải có đủ đúng 8 chữ số! (Hiện tại: ${newSbd.length} số)`, "warning");
       inputSbd.focus();
       return;
     }
-
-    // Nếu SBD toàn số và ngắn hơn 8 ký tự -> tự động thêm số 0 ở đầu (padding zero chuẩn 8 số)
-    if (/^\d+$/.test(newSbd) && newSbd.length < 8) {
-      newSbd = newSbd.padStart(8, '0');
-      inputSbd.value = newSbd;
-    }
+    inputSbd.value = newSbd;
 
     if (!newExamCode) {
       this.showToast("Vui lòng nhập Mã đề thi!", "warning");
@@ -4689,17 +4797,28 @@ class AppController {
     const sheetImage = paper.cleanImage || paper.previewImage || '';
     this.setupFastFixViewer(sheetImage);
 
-    // 4. Điền sẵn SBD nhận diện được
+    // 4. Điền sẵn SBD nhận diện được (Được chuẩn hóa thông minh theo chuẩn 8 số)
     const sbdInput = document.getElementById('fastFixSbdInput');
+    const defaultGrade = this.state.examMeta?.grade || '12';
+    const rawSbd = String(paper.sbd || '').trim();
+    const normalizedSbd = this.normalizeSbd(rawSbd, defaultGrade);
     if (sbdInput) {
-      const rawSbd = String(paper.sbd || '').replace(/[^0-9]/g, '');
-      sbdInput.value = rawSbd;
+      sbdInput.value = normalizedSbd || rawSbd.replace(/[^0-9]/g, '');
     }
+
+    // Cập nhật gợi ý danh sách học sinh từ danh sách lớp
+    this.updateFastFixStudentSuggestions(sbdInput ? sbdInput.value : '');
 
     // 5. Họ tên học sinh
     const nameInput = document.getElementById('fastFixNameInput');
     if (nameInput) {
-      nameInput.value = (paper.name && !paper.name.startsWith('Học sinh SBD')) ? paper.name : '';
+      if (paper.name && !paper.name.startsWith('Học sinh SBD')) {
+        nameInput.value = paper.name;
+      } else {
+        const stuList = this.state.studentList || [];
+        const match = stuList.find(s => String(s.sbd).trim() === (normalizedSbd || (sbdInput ? sbdInput.value : '')));
+        nameInput.value = match ? match.name : '';
+      }
     }
 
     // 6. Hiển thị danh sách nút mã đề để giáo viên bấm chọn 1 chạm
@@ -4747,6 +4866,85 @@ class AppController {
     if (codeInput) codeInput.value = code;
   }
 
+  updateFastFixStudentSuggestions(query = '') {
+    const drawer = document.getElementById('fastFixStudentDrawer');
+    const status = document.getElementById('fastFixSbdStatus');
+    if (!drawer) return;
+
+    const stuList = this.state.studentList || [];
+    if (stuList.length === 0) {
+      drawer.style.display = 'none';
+      if (status) status.textContent = '';
+      return;
+    }
+
+    const q = String(query || '').trim().toLowerCase();
+    const defaultGrade = this.state.examMeta?.grade || '12';
+    const normalizedQ = this.normalizeSbd(q, defaultGrade);
+
+    // Cập nhật trạng thái SBD khớp
+    const exactMatch = stuList.find(s => String(s.sbd).trim() === (normalizedQ || q));
+    if (status) {
+      if (exactMatch) {
+        status.innerHTML = `<span style="color:#15803d; font-weight:800;">✓ ${exactMatch.name} (${exactMatch.className})</span>`;
+      } else if (normalizedQ && normalizedQ.length === 8) {
+        status.innerHTML = `<span style="color:#4f46e5; font-weight:800;">SBD chuẩn: ${normalizedQ}</span>`;
+      } else if (q.length > 0) {
+        status.innerHTML = `<span style="color:#b45309;">(Chưa đủ 8 số)</span>`;
+      } else {
+        status.textContent = '';
+      }
+    }
+
+    // Lọc danh sách học sinh gợi ý
+    const matched = stuList.filter(s => {
+      const sbd = String(s.sbd).trim();
+      const name = String(s.name || '').toLowerCase();
+      if (!q) return true;
+      return sbd.includes(q) || sbd === normalizedQ || name.includes(q);
+    });
+
+    if (matched.length === 0) {
+      drawer.style.display = 'none';
+      return;
+    }
+
+    drawer.style.display = 'block';
+    drawer.innerHTML = `
+      <div style="font-size:0.75rem; color:#475569; font-weight:700; margin-bottom:4px; display:flex; justify-content:space-between;">
+        <span>👥 Gợi ý học sinh (${matched.length} HS) — Chạm để tự điền SBD:</span>
+      </div>
+      <div style="display:flex; flex-direction:column; gap:3px;">
+        ${matched.slice(0, 6).map(s => `
+          <div onclick="window.app.selectFastFixStudent('${s.sbd}')"
+               style="display:flex; justify-content:space-between; align-items:center; padding:5px 8px; background:#ffffff; border:1px solid #cbd5e1; border-radius:6px; cursor:pointer; font-size:0.82rem; transition:background 0.15s;"
+               onmouseover="this.style.background='#e0e7ff'" onmouseout="this.style.background='#ffffff'">
+            <div>
+              <strong style="color:#1e1b4b;">${s.name}</strong>
+              <span style="font-size:0.7rem; color:#64748b; margin-left:4px;">${s.className}</span>
+            </div>
+            <span style="font-family:monospace; font-weight:800; color:#4338ca; background:#e0e7ff; padding:2px 8px; border-radius:4px; font-size:0.82rem;">
+              ${s.sbd}
+            </span>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  selectFastFixStudent(sbd) {
+    const sbdInput = document.getElementById('fastFixSbdInput');
+    const nameInput = document.getElementById('fastFixNameInput');
+    const stuList = this.state.studentList || [];
+    const found = stuList.find(s => String(s.sbd).trim() === sbd);
+    if (!found) return;
+
+    if (sbdInput) sbdInput.value = found.sbd;
+    if (nameInput) nameInput.value = found.name;
+    this.updateFastFixStudentSuggestions(found.sbd);
+    this.showToast(`Đã chọn học sinh: ${found.name} (SBD: ${found.sbd})!`, "info");
+  }
+
   closeFastFixModal() {
     const modal = document.getElementById('fastFixModal');
     if (modal) modal.classList.remove('active');
@@ -4771,15 +4969,20 @@ class AppController {
     const nameInput = document.getElementById('fastFixNameInput');
     const codeInput = document.getElementById('fastFixExamCodeInput');
 
-    let newSbd = sbdInput ? sbdInput.value.trim() : '';
-    if (newSbd.length > 0 && newSbd.length < 8) {
-      newSbd = newSbd.padStart(8, '0');
+    let rawSbd = sbdInput ? sbdInput.value.trim().replace(/[^0-9]/g, '') : '';
+    let newSbd = rawSbd;
+    // Sửa lỗi tiền tố '0' đứng trước khối do bug cũ (01200004 -> 12000004) nếu có:
+    if (newSbd.length === 8 && (newSbd.startsWith('010') || newSbd.startsWith('011') || newSbd.startsWith('012'))) {
+      const grade = newSbd.substring(1, 3);
+      const num = newSbd.substring(3).replace(/^0+/, '') || '0';
+      newSbd = grade + num.padStart(6, '0');
     }
+
     const newCode = codeInput ? codeInput.value.trim() : (this.state.fastFixSelectedCode || '');
     const newName = nameInput ? nameInput.value.trim() : '';
 
     if (!newSbd || newSbd.length !== 8) {
-      this.showToast("Số báo danh phải đủ đúng 8 chữ số!", "warning");
+      this.showToast(`Số báo danh phải có đủ đúng 8 chữ số! (Hiện tại: ${newSbd.length} số)`, "warning");
       if (sbdInput) sbdInput.focus();
       return;
     }
@@ -4800,15 +5003,16 @@ class AppController {
     // Đối chiếu danh sách học sinh nếu có
     const stuList = this.state.studentList || [];
     const foundStu = stuList.find(s => String(s.sbd).trim() === newSbd);
+    let sbdWarning = '';
     if (foundStu) {
       paper.name = foundStu.name;
-      paper.className = foundStu.className;
-    } else if (newName) {
-      paper.name = newName;
-      paper.className = paper.className || 'Tự do';
+      paper.className = foundStu.className || (this.state.examMeta?.className || '12D');
     } else {
-      paper.name = "Học sinh SBD " + newSbd;
-      paper.className = paper.className || 'Tự do';
+      if (stuList.length > 0) {
+        sbdWarning = ` (⚠️ SBD ${newSbd} không có trong Danh sách lớp)`;
+      }
+      paper.name = newName || ("Học sinh SBD " + newSbd);
+      paper.className = paper.className || (this.state.examMeta?.className || '12D');
     }
 
     // Tính lại điểm theo mã đề mới
@@ -4818,7 +5022,8 @@ class AppController {
     paper.p2Score = newGrade.p2Score;
     paper.p3Score = newGrade.p3Score;
     paper.totalScore = newGrade.totalScore;
-    paper.notes = newGrade.notes ? `Đã sửa SBD/Mã đề; ${newGrade.notes}` : 'Đã sửa SBD/Mã đề';
+    const notePrefix = sbdWarning ? `Đã sửa SBD/Mã đề${sbdWarning}` : 'Đã sửa SBD/Mã đề';
+    paper.notes = newGrade.notes ? `${notePrefix}; ${newGrade.notes}` : notePrefix;
     paper.details = newGrade.details;
 
     // Lưu vào danh sách đã chấm
@@ -4831,7 +5036,7 @@ class AppController {
     if (modal) modal.classList.remove('active');
     this.state.currentFastFixPaper = null;
 
-    this.showToast(`✓ Đã xác nhận: SBD ${paper.sbd} - Mã đề ${paper.examCode} - Điểm: ${paper.totalScore.toFixed(2)}đ! Tiếp tục...`, "success");
+    this.showToast(`✓ Đã xác nhận: SBD ${paper.sbd} - Mã đề ${paper.examCode}${sbdWarning} - Điểm: ${paper.totalScore.toFixed(2)}đ!`, sbdWarning ? "warning" : "success");
     if (window.omrEngine && window.omrEngine.playBeep) {
       window.omrEngine.playBeep(true);
     }
