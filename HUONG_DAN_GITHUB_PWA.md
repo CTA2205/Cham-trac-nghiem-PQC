@@ -101,21 +101,23 @@ Khi mở đường link trên điện thoại bằng trình duyệt:
   * Nếu nạp tệp `DANH SACH HỌC SINH.xlsx`: Hệ thống sẽ tự động ghép tên và lớp khi quét bài.
   * Nếu **không nạp danh sách**: Ứng dụng vẫn chấm bình thường theo SBD 8 số đã tô trên phiếu. Bảng điểm xuất ra được sắp xếp theo SBD tăng dần (cột B) để thầy/cô dễ dàng dùng hàm `VLOOKUP` ghép với danh sách học sinh trên máy tính sau này.
 
-### BƯỚC 3: Chấm Bài Thi (Tab 3 📸 - Cách B Tối Ưu Nhất Cho Điện Thoại)
-- **Quy trình Cách B:**
-  1. Thầy/cô dùng ứng dụng **Camera của điện thoại** (bật tính năng *Quét tài liệu / Scan document*) để chụp sẵn 30–50 bài thi của lớp. (Camera máy có AI nhận diện viền giấy, tự nắn phẳng, tăng độ nét và tương phản cực chuẩn).
+### BƯỚC 3: Chấm Bài Thi (Tab 3 📸 - Chấm Theo Tệp Ảnh Thuần Túy)
+- **Quy trình chuẩn cho điện thoại & máy tính:**
+  1. Thầy/cô dùng **Camera của điện thoại** (bật tính năng *Quét tài liệu / Scan document*) chụp sẵn 30–50 bài thi của lớp. (Camera máy có AI tự nắn phẳng viền giấy, tăng độ nét chữ viết tay và ô chì cực chuẩn).
   2. Mở ứng dụng PWA ➔ Vào Tab **Chấm bài** ➔ Bấm nút to màu xanh:
-     👉 **`📁 CHỌN TOÀN BỘ ẢNH BÀI THI TỪ THƯ VIỆN ĐỂ CHẤM`**
-  3. Chọn toàn bộ ảnh vừa chụp trong Thư viện ảnh của điện thoại.
-  4. Hệ thống sẽ tự động chấm lần lượt từng bài với tốc độ cao.
-- **⚡ TỰ ĐỘNG DỪNG VÀ BÁO CHỈNH LIỀN NẾU SAI SBD / MÃ ĐỀ (Live Fast-Fix):**
+     👉 **`📁 CHỌN ẢNH BÀI THI ĐỂ CHẤM (30–50 BÀI)`**
+  3. Chọn toàn bộ ảnh vừa chụp trong Thư viện ảnh. Ứng dụng sẽ tự động chấm lần lượt từng bài với tốc độ cao.
+  *(Ứng dụng KHÔNG mở camera nền, không gây nóng máy hay tốn pin).*
+- **⚡ TỰ ĐỘNG DỪNG & SOI TOÀN BỘ PHIẾU A4 KHI SAI/THIẾU SBD, MÃ ĐỀ:**
   * Trong quá trình chấm, nếu phát hiện bài thi **chưa tô, tô thiếu SBD** hoặc **chưa tô, sai Mã đề**:
   * Quá trình chấm **lập tức tạm dừng** và mở hộp thoại **Sửa Nhanh SBD & Mã Đề**.
-  * Cửa sổ hiển thị ngay **ảnh cắt khu vực viết tay mực xanh** của học sinh (Họ tên, SBD, Mã đề).
-  * Thầy/cô chỉ cần chạm vào nút mã đề tương ứng (`[1201]`, `[1202]...`), kiểm tra lại SBD 8 số rồi bấm:
+  * **Soi rõ toàn bộ phiếu A4**: Màn hình hiển thị toàn bộ trang phiếu A4 độ nét cao. Thầy/cô có thể:
+    - **Dùng 2 ngón tay chụm / mở** để phóng to – thu nhỏ tùy thích (Pinch-to-zoom).
+    - **Vuốt 1 ngón tay** để kéo rê mượt mà khắp trang phiếu.
+    - Dùng các nút tiện lợi: `🔍+ To`, `🔍- Nhỏ`, `🔝 Đầu phiếu` (soi ngay chữ viết tay mực xanh), `↺ Cả trang`.
+  * Thầy/cô chạm vào nút mã đề tương ứng (`[1201]`, `[1202]...`), kiểm tra lại SBD 8 số rồi bấm:
     👉 **`✅ XÁC NHẬN & TIẾP TỤC ➡`**
   * Ứng dụng cập nhật điểm ngay và **tự động tiếp tục chấm các bài còn lại**!
-- **Tùy chọn phụ:** Nếu cần chụp bổ sung 1 bài lẻ, có thể bấm nút **"📸 Chụp 1 bài bằng Cam máy"**.
 - Có thể bấm **"👁️ Xem bài"** bất kỳ lúc nào để soi lại ảnh bài thi gốc và bảng đối chiếu đáp án chi tiết.
 
 ### BƯỚC 4: Bảng Điểm & Xuất Dữ Liệu (Tab 4 📊)
