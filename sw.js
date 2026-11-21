@@ -3,7 +3,7 @@
  * Tự động lưu cache toàn bộ ứng dụng để giáo viên mang máy vào phòng thi không có mạng vẫn chạy 100%.
  */
 
-const CACHE_NAME = 'cham-thi-2025-pwa-v3';
+const CACHE_NAME = 'cham-thi-2025-pwa-v4';
 
 const ASSETS_TO_CACHE = [
   './',

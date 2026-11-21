@@ -4079,6 +4079,216 @@ class AppController {
   }
 
 
+
+  // --- CAMERA TOÀN MÀN HÌNH VỚI KHUNG CANH CHUẨN A4 ---
+  async openFullscreenCamera() {
+    const modal = document.getElementById('cameraScanModal');
+    const video = document.getElementById('fsCameraVideo');
+    const counterEl = document.getElementById('fsGradedCount');
+    if (counterEl) counterEl.textContent = this.state.gradedList.length;
+
+    if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+      this.showToast("Trình duyệt không hỗ trợ mở camera trực tiếp. Vui lòng nạp ảnh bằng nút 'Thư viện'!", "warning");
+      const mobileCamInput = document.getElementById('mobileCameraInput');
+      if (mobileCamInput) mobileCamInput.click();
+      return;
+    }
+
+    this.showToast("Đang kích hoạt camera trực tiếp...", "info");
+    try {
+      if (this.state.cameraStream) {
+        this.state.cameraStream.getTracks().forEach(t => t.stop());
+        this.state.cameraStream = null;
+      }
+
+      const facing = this.state.cameraFacing || "environment";
+      let stream;
+      try {
+        stream = await navigator.mediaDevices.getUserMedia({
+          video: {
+            facingMode: { ideal: facing },
+            width: { ideal: 1920, min: 1280 },
+            height: { ideal: 1080, min: 720 }
+          },
+          audio: false
+        });
+      } catch (err1) {
+        console.warn("Thử độ phân giải cơ bản:", err1);
+        try {
+          stream = await navigator.mediaDevices.getUserMedia({
+            video: { facingMode: { ideal: facing } },
+            audio: false
+          });
+        } catch (err2) {
+          stream = await navigator.mediaDevices.getUserMedia({ video: true, audio: false });
+        }
+      }
+
+      this.state.cameraStream = stream;
+      const track = stream.getVideoTracks()[0];
+      this.state.cameraTrack = track;
+
+      if (video) {
+        video.muted = true;
+        video.setAttribute('playsinline', '');
+        video.setAttribute('webkit-playsinline', '');
+        video.srcObject = stream;
+        await video.play();
+      }
+
+      // Kiểm tra hỗ trợ đèn flash
+      const flashBtn = document.getElementById('btnToggleFlash');
+      if (flashBtn && track && track.getCapabilities && track.getCapabilities().torch) {
+        flashBtn.style.display = 'block';
+      } else if (flashBtn) {
+        flashBtn.style.display = 'none';
+      }
+
+      if (modal) modal.style.display = 'flex';
+    } catch (err) {
+      console.error("Lỗi khi mở camera:", err);
+      this.showToast("Không thể mở camera: " + (err.message || "Vui lòng cấp quyền truy cập camera trong cài đặt trình duyệt"), "danger");
+      const mobileCamInput = document.getElementById('mobileCameraInput');
+      if (mobileCamInput) mobileCamInput.click();
+    }
+  }
+
+  closeFullscreenCamera() {
+    const modal = document.getElementById('cameraScanModal');
+    if (modal) modal.style.display = 'none';
+    if (this.state.cameraStream) {
+      this.state.cameraStream.getTracks().forEach(t => t.stop());
+      this.state.cameraStream = null;
+      this.state.cameraTrack = null;
+    }
+    const video = document.getElementById('fsCameraVideo');
+    if (video) video.srcObject = null;
+
+    this.renderRecentScanTable();
+    this.updateStatsBar();
+    this.updateClassBreakdown();
+  }
+
+  async switchCameraFacing() {
+    this.state.cameraFacing = (this.state.cameraFacing === 'user') ? 'environment' : 'user';
+    await this.openFullscreenCamera();
+  }
+
+  async toggleFlash() {
+    const track = this.state.cameraTrack;
+    if (track && track.applyConstraints) {
+      try {
+        this.state.isTorchOn = !this.state.isTorchOn;
+        await track.applyConstraints({
+          advanced: [{ torch: this.state.isTorchOn }]
+        });
+        const btn = document.getElementById('btnToggleFlash');
+        if (btn) btn.style.background = this.state.isTorchOn ? '#f59e0b' : 'rgba(255,255,255,0.2)';
+      } catch (e) {
+        console.warn("Không bật được đèn flash:", e);
+      }
+    }
+  }
+
+  async captureFromFullscreenCamera() {
+    const video = document.getElementById('fsCameraVideo');
+    const canvas = document.getElementById('fsCameraCanvas');
+    const liveResultBox = document.getElementById('fsLiveResultBox');
+    if (!video || !video.videoWidth || !canvas) {
+      this.showToast("Camera chưa tải xong khung hình, vui lòng thử lại sau 1 giây!", "warning");
+      return;
+    }
+
+    // Phản hồi rung nhẹ
+    if (navigator.vibrate) {
+      try { navigator.vibrate([40]); } catch (e) {}
+    }
+
+    const w = video.videoWidth;
+    const h = video.videoHeight;
+    canvas.width = w;
+    canvas.height = h;
+    const ctx = canvas.getContext('2d');
+    ctx.drawImage(video, 0, 0, w, h);
+
+    if (liveResultBox) {
+      liveResultBox.style.display = 'block';
+      liveResultBox.style.borderColor = '#38bdf8';
+      liveResultBox.innerHTML = `
+        <div style="display:flex; align-items:center; gap:10px;">
+          <span style="font-size:1.4rem;" class="pulse-dot"></span>
+          <div>
+            <strong style="color:#38bdf8; font-size:0.95rem;">Đang nắn A4 & chấm điểm...</strong>
+            <div style="font-size:0.75rem; color:#cbd5e1;">Đang xử lý thị giác máy tính OMR</div>
+          </div>
+        </div>
+      `;
+    }
+
+    try {
+      const procCanvas = await this.resizeImageIfNeeded(canvas, 1600);
+      const result = await window.omrEngine.processSheetCanvas(
+        procCanvas,
+        this.state.activeExamKeys,
+        this.state.studentList,
+        this.state.gradingRules
+      );
+
+      await this.addGradedSubmission(result);
+      const counterEl = document.getElementById('fsGradedCount');
+      if (counterEl) counterEl.textContent = this.state.gradedList.length;
+
+      const sbdClean = String(result.sbd || '').trim();
+      const isSbdInvalid = !sbdClean || sbdClean.includes('?') || sbdClean.includes('_') || sbdClean.length < 8 || sbdClean === '00000000' || sbdClean === '________';
+      const isExamCodeInvalid = !result.examCode || !this.state.activeExamKeys[result.examCode] || result.examCode === '???';
+
+      if (isSbdInvalid || isExamCodeInvalid) {
+        if (liveResultBox) liveResultBox.style.display = 'none';
+        this.openFastFixModal(result);
+      } else {
+        if (liveResultBox) {
+          liveResultBox.style.display = 'block';
+          liveResultBox.style.borderColor = '#22c55e';
+          liveResultBox.innerHTML = `
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <div>
+                <div style="font-size:1.05rem; font-weight:800; color:#4ade80;">
+                  ✓ ĐÃ CHẤM: <span style="color:#ffffff;">${result.totalScore.toFixed(2)}đ</span>
+                </div>
+                <div style="font-size:0.8rem; color:#e2e8f0; margin-top:2px;">
+                  SBD: <strong>${result.sbd}</strong> | Mã đề: <strong>${result.examCode}</strong> | ${result.name}
+                </div>
+              </div>
+              <span style="background:#16a34a; color:#fff; font-size:0.75rem; font-weight:700; padding:4px 8px; border-radius:12px;">
+                Lật bài sau ➡
+              </span>
+            </div>
+          `;
+          setTimeout(() => {
+            if (liveResultBox) liveResultBox.style.display = 'none';
+          }, 3500);
+        }
+      }
+    } catch (err) {
+      console.error("Lỗi nhận diện OMR từ camera:", err);
+      if (liveResultBox) {
+        liveResultBox.style.display = 'block';
+        liveResultBox.style.borderColor = '#ef4444';
+        liveResultBox.innerHTML = `
+          <div style="color:#f87171; font-weight:700; font-size:0.9rem;">
+            ⚠️ Không nhận diện được 4 góc đen định vị!
+          </div>
+          <div style="font-size:0.75rem; color:#fca5a5; margin-top:2px;">
+            Canh sao cho 4 ô vuông đen của phiếu nằm trọn trong 4 góc khung xanh.
+          </div>
+        `;
+        setTimeout(() => {
+          if (liveResultBox) liveResultBox.style.display = 'none';
+        }, 3500);
+      }
+    }
+  }
+
   // --- TÍNH NĂNG CHẤM BẰNG CAMERA ĐIỆN THOẠI & SỬA NHANH (LIVE FAST-FIX) ---
   async handleMobileCapturedPhoto(file) {
     if (!file) return;
