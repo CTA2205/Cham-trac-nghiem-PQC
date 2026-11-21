@@ -1,0 +1,42 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" width="512" height="512">
+  <defs>
+    <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#4f46e5" />
+      <stop offset="100%" stop-color="#06b6d4" />
+    </linearGradient>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="8" stdDeviation="12" flood-color="#000" flood-opacity="0.25" />
+    </filter>
+  </defs>
+  <!-- Background rounded rect -->
+  <rect width="512" height="512" rx="112" fill="url(#bg)" />
+  <!-- Inner paper sheet -->
+  <g filter="url(#shadow)">
+    <rect x="116" y="96" width="280" height="340" rx="20" fill="#ffffff" />
+    <!-- Paper Header line -->
+    <rect x="156" y="140" width="120" height="18" rx="6" fill="#6366f1" />
+    <rect x="290" y="140" width="66" height="18" rx="6" fill="#cbd5e1" />
+    <!-- Bubbles rows -->
+    <circle cx="170" cy="200" r="14" fill="#059669" />
+    <circle cx="215" cy="200" r="14" fill="#e2e8f0" stroke="#94a3b8" stroke-width="2" />
+    <circle cx="260" cy="200" r="14" fill="#e2e8f0" stroke="#94a3b8" stroke-width="2" />
+    <circle cx="305" cy="200" r="14" fill="#e2e8f0" stroke="#94a3b8" stroke-width="2" />
+
+    <circle cx="170" cy="250" r="14" fill="#e2e8f0" stroke="#94a3b8" stroke-width="2" />
+    <circle cx="215" cy="250" r="14" fill="#059669" />
+    <circle cx="260" cy="250" r="14" fill="#e2e8f0" stroke="#94a3b8" stroke-width="2" />
+    <circle cx="305" cy="250" r="14" fill="#e2e8f0" stroke="#94a3b8" stroke-width="2" />
+
+    <circle cx="170" cy="300" r="14" fill="#e2e8f0" stroke="#94a3b8" stroke-width="2" />
+    <circle cx="215" cy="300" r="14" fill="#e2e8f0" stroke="#94a3b8" stroke-width="2" />
+    <circle cx="260" cy="300" r="14" fill="#059669" />
+    <circle cx="305" cy="300" r="14" fill="#e2e8f0" stroke="#94a3b8" stroke-width="2" />
+
+    <!-- 2025 badge -->
+    <rect x="156" y="360" width="200" height="40" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2" />
+    <text x="256" y="388" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#3b82f6" text-anchor="middle">CHẤM THI 2025</text>
+  </g>
+  <!-- Big Green Checkmark badge -->
+  <circle cx="380" cy="390" r="62" fill="#10b981" filter="url(#shadow)" />
+  <path d="M350 390 L372 412 L415 365" fill="none" stroke="#ffffff" stroke-width="12" stroke-linecap="round" stroke-linejoin="round" />
+</svg>
