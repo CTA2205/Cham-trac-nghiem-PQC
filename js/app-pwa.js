@@ -258,12 +258,14 @@ class AppController {
       });
     }
 
-    // Tải ảnh bài thi chấm hàng loạt (Batch upload nhiều file ảnh)
+    // Tải ảnh bài thi chấm hàng loạt (Cách B: Batch upload nhiều file ảnh từ Thư viện điện thoại)
     const batchInput = document.getElementById('batchImagesInput');
     if (batchInput) {
       batchInput.addEventListener('change', async (e) => {
         if (e.target.files.length > 0) {
-          this.handleStagedFiles(e.target.files);
+          const files = Array.from(e.target.files);
+          batchInput.value = '';
+          await this.processBatchWithImmediateFix(files);
         }
       });
     }
@@ -273,7 +275,9 @@ class AppController {
     if (folderInput) {
       folderInput.addEventListener('change', async (e) => {
         if (e.target.files.length > 0) {
-          this.handleStagedFiles(e.target.files);
+          const files = Array.from(e.target.files);
+          folderInput.value = '';
+          await this.processBatchWithImmediateFix(files);
         }
       });
     }
@@ -4317,9 +4321,12 @@ class AppController {
 
       if (isSbdInvalid || isExamCodeInvalid) {
         // Có lỗi tô SBD hoặc Mã đề -> Mở popup sửa nhanh ngay lúc chụp
-        this.openFastFixModal(result);
+        this.openFastFixModal(result, 1, 1);
       } else {
         this.showToast(`✓ Đã chấm xong: SBD ${result.sbd} - Mã đề ${result.examCode} - Điểm: ${result.totalScore.toFixed(2)}đ`, "success");
+        if (window.omrEngine && window.omrEngine.playBeep) {
+          window.omrEngine.playBeep(true);
+        }
       }
     } catch (err) {
       if (progWrap) progWrap.style.display = 'none';
@@ -4328,12 +4335,151 @@ class AppController {
     }
   }
 
-  openFastFixModal(paper) {
+  /**
+   * CÁCH B: CHẤM HÀNG LOẠT ẢNH TỪ THƯ VIỆN & TỰ ĐỘNG DỪNG BÁO CHỈNH LIỀN
+   * Khi phát hiện học sinh tô sai SBD, mã đề hoặc chưa tô -> Tạm dừng batch và mở Fast-Fix Modal
+   * Giáo viên sửa xong bấm "Xác nhận & Tiếp tục" -> Batch tự động chạy tiếp các bài còn lại!
+   */
+  async processBatchWithImmediateFix(files) {
+    const fileList = Array.from(files).filter(f => f.type.startsWith('image/') || /\.(jpg|jpeg|png|webp|bmp)$/i.test(f.name));
+    if (fileList.length === 0) {
+      this.showToast("Không tìm thấy tệp ảnh bài thi nào hợp lệ (JPG, PNG, JPEG)!", "warning");
+      return;
+    }
+
+    if (!this.state.activeExamKeys || Object.keys(this.state.activeExamKeys).length === 0) {
+      this.showToast("Vui lòng nạp hoặc cấu hình đáp án ở Tab 1 trước khi chấm bài!", "warning");
+      this.switchTab('tab-answers');
+      return;
+    }
+
+    // Sắp xếp theo tên tự nhiên để bài thi chấm theo thứ tự chụp
+    fileList.sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: 'base' }));
+
+    const progWrap = document.getElementById('gradingProgressWrap');
+    const progBar = document.getElementById('gradingProgressBar');
+    const progText = document.getElementById('gradingProgressText');
+    const progPercent = document.getElementById('gradingProgressPercent');
+    const progStatus = document.getElementById('gradingCurrentStatus');
+
+    if (progWrap) progWrap.style.display = 'block';
+    if (progBar) progBar.style.width = '0%';
+    if (progPercent) progPercent.textContent = '0%';
+    if (progText) progText.textContent = `Bắt đầu chấm: 0 / ${fileList.length} bài thi...`;
+    if (progStatus) progStatus.innerHTML = `Đang nạp bộ nhận diện OMR...`;
+
+    this.showToast(`Bắt đầu chấm ${fileList.length} bài thi từ thư viện...`, "info");
+
+    let successCount = 0;
+    let failCount = 0;
+
+    for (let i = 0; i < fileList.length; i++) {
+      const file = fileList[i];
+      const currentIdx = i + 1;
+      const totalCount = fileList.length;
+      const pct = Math.round((currentIdx / totalCount) * 100);
+
+      if (progBar) progBar.style.width = `${pct}%`;
+      if (progPercent) progPercent.textContent = `${pct}%`;
+      if (progText) progText.textContent = `Đang chấm bài ${currentIdx} / ${totalCount}: ${file.name}`;
+      if (progStatus) progStatus.innerHTML = `Đang quét 4 góc neo, SBD, Mã đề và 3 phần thi...`;
+
+      let result = null;
+      try {
+        result = await this.processSingleImageFile(file);
+      } catch (err) {
+        console.warn(`Lỗi chấm file ${file.name}:`, err);
+        failCount++;
+        if (progStatus) {
+          progStatus.innerHTML = `<span style="color:#ef4444; font-weight:700;">⚠️ Không nhận diện được 4 góc đen định vị bài "${file.name}"</span>`;
+        }
+        this.showToast(`⚠️ Không nhận diện được 4 góc bài: ${file.name}`, "warning");
+        await new Promise(r => setTimeout(r, 1200));
+        continue;
+      }
+
+      if (!result) continue;
+
+      // Kiểm tra quy cách: SBD và Mã đề
+      const sbdClean = String(result.sbd || '').trim();
+      const isSbdInvalid = !sbdClean || sbdClean.includes('?') || sbdClean.includes('_') || sbdClean.length < 8 || sbdClean === '00000000' || sbdClean === '________';
+      const isExamCodeInvalid = !result.examCode || !this.state.activeExamKeys[result.examCode] || result.examCode === '???';
+
+      if (isSbdInvalid || isExamCodeInvalid) {
+        // TỰ ĐỘNG DỪNG VÀ BÁO CHỈNH LIỀN!
+        if (progStatus) {
+          progStatus.innerHTML = `<span style="color:#b45309; font-weight:800;">⏸️ TẠM DỪNG BÀI ${currentIdx}/${totalCount}: Học sinh tô sai/chưa tô SBD hoặc Mã đề! Đang mở hộp thoại chỉnh ngay...</span>`;
+        }
+        if (window.omrEngine && window.omrEngine.playBeep) {
+          window.omrEngine.playBeep(false);
+        }
+
+        // Đợi giáo viên bấm xác nhận sửa hoặc bỏ qua
+        await this.waitForTeacherToFixPaper(result, currentIdx, totalCount);
+      } else {
+        if (window.omrEngine && window.omrEngine.playBeep) {
+          window.omrEngine.playBeep(true);
+        }
+      }
+
+      successCount++;
+    }
+
+    if (progBar) progBar.style.width = '100%';
+    if (progPercent) progPercent.textContent = '100%';
+    if (progText) progText.textContent = `Hoàn tất! Đã chấm xong ${successCount} / ${fileList.length} bài.`;
+    if (progStatus) {
+      progStatus.innerHTML = `<span style="color:#15803d; font-weight:800;">✓ Toàn bộ ${successCount} bài thi đã chấm xong và cập nhật vào Bảng điểm!</span>`;
+    }
+
+    this.showToast(`✓ Đã chấm xong ${successCount} bài thi! Đang chuyển sang Bảng điểm...`, "success");
+
+    // Tự động chuyển sang Tab Bảng điểm sau 1.2s để giáo viên xem kết quả ngay
+    setTimeout(() => {
+      if (progWrap) progWrap.style.display = 'none';
+      this.switchTab('tab-results');
+    }, 1200);
+  }
+
+  /**
+   * Tạm dừng vòng lặp batch và mở Fast-Fix Modal chờ giáo viên xử lý
+   */
+  waitForTeacherToFixPaper(paper, currentNum, totalNum) {
+    return new Promise((resolve) => {
+      this.state.resumeBatchResolve = resolve;
+      this.openFastFixModal(paper, currentNum, totalNum);
+    });
+  }
+
+  openFastFixModal(paper, currentNum, totalNum) {
     this.state.currentFastFixPaper = paper;
     this.state.fastFixSelectedCode = paper.examCode || '';
 
     const modal = document.getElementById('fastFixModal');
     if (!modal) return;
+
+    // Cập nhật tiêu đề hiển thị số thứ tự bài đang chỉnh
+    const titleEl = document.getElementById('fastFixModalTitle');
+    if (titleEl) {
+      if (currentNum && totalNum) {
+        titleEl.textContent = `⚡ Sửa Nhanh SBD & Mã Đề (Bài ${currentNum} / ${totalNum})`;
+      } else {
+        titleEl.textContent = `⚡ Sửa Nhanh SBD & Mã Đề`;
+      }
+    }
+
+    const subtitleEl = document.getElementById('fastFixModalSubtitle');
+    if (subtitleEl) {
+      const errReason = [];
+      const sbdClean = String(paper.sbd || '').trim();
+      if (!sbdClean || sbdClean.includes('?') || sbdClean.includes('_') || sbdClean.length < 8 || sbdClean === '00000000' || sbdClean === '________') {
+        errReason.push("Chưa tô / tô thiếu SBD");
+      }
+      if (!paper.examCode || !this.state.activeExamKeys[paper.examCode] || paper.examCode === '???') {
+        errReason.push("Chưa tô / sai Mã đề");
+      }
+      subtitleEl.innerHTML = `<strong style="color:#b91c1c;">Phát hiện: ${errReason.join(' & ')}.</strong> Soi chữ viết tay bên dưới để bấm chọn sửa:`;
+    }
 
     // Hiển thị phần đầu phiếu viết tay của học sinh (Họ tên, SBD, Mã đề viết mực xanh)
     const previewCanvas = document.getElementById('fastFixHeaderCanvas');
@@ -4375,7 +4521,7 @@ class AppController {
           return `<button type="button" class="btn btn-outline btn-sm fast-fix-code-btn ${isSelected ? 'active' : ''}" 
                           data-code="${code}" 
                           onclick="window.app.selectFastFixExamCode('${code}')"
-                          style="font-family:monospace; font-weight:800; font-size:0.95rem; padding:6px 14px; border-radius:8px;">
+                          style="font-family:monospace; font-weight:800; font-size:0.95rem; padding:6px 14px; border-radius:8px; ${isSelected ? 'background:#4f46e5; color:#ffffff; border-color:#4f46e5;' : 'background:#ffffff; color:#1e1b4b; border-color:#cbd5e1;'}">
                     ${code}
                   </button>`;
         }).join(' ');
@@ -4394,7 +4540,17 @@ class AppController {
   selectFastFixExamCode(code) {
     this.state.fastFixSelectedCode = code;
     document.querySelectorAll('.fast-fix-code-btn').forEach(btn => {
-      btn.classList.toggle('active', btn.getAttribute('data-code') === code);
+      const match = (btn.getAttribute('data-code') === code);
+      btn.classList.toggle('active', match);
+      if (match) {
+        btn.style.background = '#4f46e5';
+        btn.style.color = '#ffffff';
+        btn.style.borderColor = '#4f46e5';
+      } else {
+        btn.style.background = '#ffffff';
+        btn.style.color = '#1e1b4b';
+        btn.style.borderColor = '#cbd5e1';
+      }
     });
     const codeInput = document.getElementById('fastFixExamCodeInput');
     if (codeInput) codeInput.value = code;
@@ -4404,6 +4560,13 @@ class AppController {
     const modal = document.getElementById('fastFixModal');
     if (modal) modal.classList.remove('active');
     this.state.currentFastFixPaper = null;
+
+    // Nếu đang trong batch thì tiếp tục bài tiếp theo
+    if (this.state.resumeBatchResolve) {
+      const resume = this.state.resumeBatchResolve;
+      this.state.resumeBatchResolve = null;
+      resume();
+    }
   }
 
   async confirmFastFix() {
@@ -4469,10 +4632,21 @@ class AppController {
 
     // Lưu vào danh sách đã chấm
     await this.addGradedSubmission(paper);
-    this.closeFastFixModal();
-    this.showToast(`✓ Đã xác nhận: SBD ${paper.sbd} - Mã đề ${paper.examCode} - Điểm: ${paper.totalScore.toFixed(2)}đ!`, "success");
+
+    const resume = this.state.resumeBatchResolve;
+    this.state.resumeBatchResolve = null;
+
+    const modal = document.getElementById('fastFixModal');
+    if (modal) modal.classList.remove('active');
+    this.state.currentFastFixPaper = null;
+
+    this.showToast(`✓ Đã xác nhận: SBD ${paper.sbd} - Mã đề ${paper.examCode} - Điểm: ${paper.totalScore.toFixed(2)}đ! Tiếp tục...`, "success");
     if (window.omrEngine && window.omrEngine.playBeep) {
       window.omrEngine.playBeep(true);
+    }
+
+    if (resume) {
+      resume(); // Tiếp tục bài tiếp theo trong danh sách batch!
     }
   }
 

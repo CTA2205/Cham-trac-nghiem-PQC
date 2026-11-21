@@ -101,14 +101,22 @@ Khi mở đường link trên điện thoại bằng trình duyệt:
   * Nếu nạp tệp `DANH SACH HỌC SINH.xlsx`: Hệ thống sẽ tự động ghép tên và lớp khi quét bài.
   * Nếu **không nạp danh sách**: Ứng dụng vẫn chấm bình thường theo SBD 8 số đã tô trên phiếu. Bảng điểm xuất ra được sắp xếp theo SBD tăng dần (cột B) để thầy/cô dễ dàng dùng hàm `VLOOKUP` ghép với danh sách học sinh trên máy tính sau này.
 
-### BƯỚC 3: Chụp & Chấm Bài Bằng Camera (Tab 3 📸)
-- Bấm nút to nổi bật: **"📸 BẤM VÀO ĐÂY ĐỂ CHỤP & CHẤM BÀI NGAY"**.
-- Camera điện thoại mở lên, chụp vuông góc tờ phiếu thi (đảm bảo nhìn rõ 4 góc định vị màu đen).
-- **Tính năng Sửa Nhanh (Live Fast-Fix):**
-  * Nếu học sinh tô mờ, quên tô SBD hoặc quên tô mã đề: Màn hình sẽ hiện ngay cửa sổ **Sửa Nhanh Tại Lúc Chụp**.
-  * Cửa sổ hiển thị ảnh cắt vùng học sinh viết tay Họ tên, SBD, Mã đề bằng bút mực xanh.
-  * Thầy/cô chỉ cần chạm vào nút mã đề tương ứng (`[1201]`, `[1202]`) và nhập SBD rồi bấm **"✅ XÁC NHẬN & CHẤM NGAY"**.
-- Có thể bấm **"👁️ Xem bài"** bất kỳ lúc nào để soi bài thi và bảng đối chiếu đáp án chi tiết.
+### BƯỚC 3: Chấm Bài Thi (Tab 3 📸 - Cách B Tối Ưu Nhất Cho Điện Thoại)
+- **Quy trình Cách B:**
+  1. Thầy/cô dùng ứng dụng **Camera của điện thoại** (bật tính năng *Quét tài liệu / Scan document*) để chụp sẵn 30–50 bài thi của lớp. (Camera máy có AI nhận diện viền giấy, tự nắn phẳng, tăng độ nét và tương phản cực chuẩn).
+  2. Mở ứng dụng PWA ➔ Vào Tab **Chấm bài** ➔ Bấm nút to màu xanh:
+     👉 **`📁 CHỌN TOÀN BỘ ẢNH BÀI THI TỪ THƯ VIỆN ĐỂ CHẤM`**
+  3. Chọn toàn bộ ảnh vừa chụp trong Thư viện ảnh của điện thoại.
+  4. Hệ thống sẽ tự động chấm lần lượt từng bài với tốc độ cao.
+- **⚡ TỰ ĐỘNG DỪNG VÀ BÁO CHỈNH LIỀN NẾU SAI SBD / MÃ ĐỀ (Live Fast-Fix):**
+  * Trong quá trình chấm, nếu phát hiện bài thi **chưa tô, tô thiếu SBD** hoặc **chưa tô, sai Mã đề**:
+  * Quá trình chấm **lập tức tạm dừng** và mở hộp thoại **Sửa Nhanh SBD & Mã Đề**.
+  * Cửa sổ hiển thị ngay **ảnh cắt khu vực viết tay mực xanh** của học sinh (Họ tên, SBD, Mã đề).
+  * Thầy/cô chỉ cần chạm vào nút mã đề tương ứng (`[1201]`, `[1202]...`), kiểm tra lại SBD 8 số rồi bấm:
+    👉 **`✅ XÁC NHẬN & TIẾP TỤC ➡`**
+  * Ứng dụng cập nhật điểm ngay và **tự động tiếp tục chấm các bài còn lại**!
+- **Tùy chọn phụ:** Nếu cần chụp bổ sung 1 bài lẻ, có thể bấm nút **"📸 Chụp 1 bài bằng Cam máy"**.
+- Có thể bấm **"👁️ Xem bài"** bất kỳ lúc nào để soi lại ảnh bài thi gốc và bảng đối chiếu đáp án chi tiết.
 
 ### BƯỚC 4: Bảng Điểm & Xuất Dữ Liệu (Tab 4 📊)
 - **📊 Xuất Excel (10 cột):** Tạo tệp Excel chuẩn font Times New Roman, khổ A4 ngang, 2 chữ số thập phân, tổng điểm in đậm, lặp lại tiêu đề khi sang trang, chân bảng có ngày xuất An Giang và 3 chức danh ký duyệt.
