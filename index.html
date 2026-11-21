@@ -18,7 +18,7 @@
   <link rel="icon" type="image/svg+xml" href="./icons/icon.svg">
 
   <!-- CSS Nội bộ Offline 100% -->
-  <link rel="stylesheet" href="./css/style.css">
+  <link rel="stylesheet" href="./css/style.css?v=2.7">
 </head>
 
 <body>
@@ -431,11 +431,11 @@
             </div>
           </div>
 
-          <!-- Khung hiển thị tương tác Zoom & Drag -->
+          <!-- Khung hiển thị soi phiếu có thanh cuộn & Zoom mượt mà -->
           <div id="fastFixViewerContainer"
-            style="position:relative; width:100%; height:320px; background:#1e293b; border-radius:8px; overflow:hidden; touch-action:none; user-select:none; cursor:grab; border:1px solid #475569;">
+            style="position:relative; width:100%; height:320px; max-height:45vh; background:#0f172a; border-radius:8px; overflow:auto; text-align:center; padding:8px; border:1px solid #475569; -webkit-overflow-scrolling:touch;">
             <img id="fastFixFullImage" src="" alt="Phiếu bài thi A4"
-              style="position:absolute; top:0; left:0; transform-origin:0 0; transition:transform 0.05s ease-out; max-width:none; will-change:transform;">
+              style="display:inline-block; max-width:100%; height:auto; transform-origin:top center; transition:transform 0.12s ease-out; box-shadow:0 4px 16px rgba(0,0,0,0.5); border-radius:4px; will-change:transform;">
           </div>
         </div>
 
@@ -649,10 +649,10 @@
   <!-- Scripts Nội bộ Offline 100% -->
   <script src="./lib/xlsx.full.min.js"></script>
   <script src="./lib/jszip.min.js"></script>
-  <script src="./js/omr-engine.js?v=2.6"></script>
-  <script src="./js/excel-handler.js?v=2.6"></script>
-  <script src="./js/export-zip.js?v=2.6"></script>
-  <script src="./js/app-pwa.js?v=2.6"></script>
+  <script src="./js/omr-engine.js?v=2.7"></script>
+  <script src="./js/excel-handler.js?v=2.7"></script>
+  <script src="./js/export-zip.js?v=2.7"></script>
+  <script src="./js/app-pwa.js?v=2.7"></script>
   <script>
     // Đăng ký Service Worker để ứng dụng chạy Offline 100% khi không có mạng
     if ('serviceWorker' in navigator) {
