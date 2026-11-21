@@ -922,6 +922,45 @@ body {
 }
 
 /* --- Section 1: Form Meta Inputs Styles --- */
+.meta-inputs-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 12px;
+}
+.meta-col-full {
+  grid-column: 1 / -1;
+}
+.meta-col-2 {
+  grid-column: span 2;
+}
+@media (max-width: 860px) {
+  .meta-inputs-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 10px !important;
+  }
+  .meta-col-full {
+    grid-column: 1 / -1 !important;
+  }
+}
+@media (max-width: 480px) {
+  .meta-inputs-grid {
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
+  }
+  .meta-col-full {
+    grid-column: 1 / -1 !important;
+  }
+  .meta-input-group {
+    padding: 10px 10px !important;
+  }
+  .meta-input-group label {
+    font-size: 0.78rem !important;
+    margin-bottom: 4px !important;
+  }
+  .meta-input-group input {
+    font-size: 0.92rem !important;
+  }
+}
 .meta-input-group {
   background: #ffffff;
   border: 1.5px solid #e2e8f0;

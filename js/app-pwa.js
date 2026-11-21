@@ -2044,37 +2044,42 @@ class AppController {
     }
 
     container.innerHTML = `
-      <div class="grid-3" style="margin-bottom:12px;">
-        <div class="meta-input-group school-input-highlight">
+      <div class="meta-inputs-grid">
+        <!-- Hàng 1: Tên trường (toàn bộ chiều ngang) -->
+        <div class="meta-input-group school-input-highlight meta-col-full">
           <label>🏫 Tên trường:</label>
           <input type="text" id="metaSchool" value="${meta.school}" style="font-weight:700; color:#1e1b4b;" title="Bấm vào để điều chỉnh tên trường">
           <div class="school-edit-hint">✏️ Giáo viên có thể tự sửa tên trường tại đây</div>
         </div>
+
+        <!-- Hàng 2: Khối lớp & Lớp học -->
         <div class="meta-input-group">
           <label>🎓 Khối lớp:</label>
-          <input type="text" id="metaGrade" value="${meta.grade}" style="font-weight:600;">
+          <input type="text" id="metaGrade" value="${meta.grade}" placeholder="Ví dụ: 12" style="font-weight:600;">
         </div>
         <div class="meta-input-group">
           <label>🏷️ Lớp học:</label>
-          <input type="text" id="metaClass" value="${meta.className}" style="font-weight:600;">
+          <input type="text" id="metaClass" value="${meta.className}" placeholder="Ví dụ: 12A1" style="font-weight:600;">
         </div>
-      </div>
-      <div class="grid-4" style="display:grid; grid-template-columns: 1fr 1.2fr 1fr 1fr; gap:12px;">
+
+        <!-- Hàng 3: Môn thi & Tên kỳ thi -->
         <div class="meta-input-group">
           <label>📚 Môn thi:</label>
-          <input type="text" id="metaSubject" value="${meta.subject}" style="font-weight:700; color:var(--primary);">
+          <input type="text" id="metaSubject" value="${meta.subject}" placeholder="Ví dụ: Toán" style="font-weight:700; color:var(--primary);">
         </div>
         <div class="meta-input-group">
           <label>📝 Tên kỳ thi:</label>
-          <input type="text" id="metaExamName" value="${meta.examName}">
+          <input type="text" id="metaExamName" value="${meta.examName}" placeholder="Ví dụ: Giữa Kỳ 1" style="font-weight:600;">
         </div>
+
+        <!-- Hàng 4: Năm học & Ngày thi -->
         <div class="meta-input-group">
           <label>📅 Năm học:</label>
           <input type="text" id="metaSchoolYear" value="${meta.schoolYear}" placeholder="2024-2025" style="font-weight:600; color:#1e1b4b;" title="Năm học (dùng đặt tên file và in bảng điểm)">
         </div>
         <div class="meta-input-group">
           <label>📅 Ngày thi:</label>
-          <input type="date" id="metaExamDate" value="${meta.examDate}">
+          <input type="date" id="metaExamDate" value="${meta.examDate}" style="font-weight:600;">
         </div>
       </div>
     `;

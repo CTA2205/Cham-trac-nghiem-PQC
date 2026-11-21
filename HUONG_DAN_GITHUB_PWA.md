@@ -1,4 +1,4 @@
-# HƯỚNG DẪN ĐƯA ỨNG DỤNG LÊN GITHUB PAGES & CHẤM THI TRÊN ĐIỆN THOẠI (PWA OFFLINE)
+# HƯỚNG DẪN ĐƯA ỨNG DỤNG "Cham-trac-nghiem-PQC" LÊN GITHUB PAGES (PWA OFFLINE)
 
 > **Mục tiêu:** Giúp giáo viên đưa ứng dụng chấm thi lên GitHub Pages cá nhân để mở trực tiếp trên điện thoại (iPhone / Android), cài thành ứng dụng độc lập trên màn hình chính và chấm thi offline 100% mà không cần kết nối máy tính.
 
@@ -10,8 +10,8 @@ Thư mục `DONG_GOI_PWA_GITHUB/` đã được tối ưu hóa hoàn chỉnh:
 ```
 DONG_GOI_PWA_GITHUB/
 │
-├── index.html                  # Giao diện chính Responsive tối ưu cho cả Điện thoại & Máy tính
-├── manifest.json               # Cấu hình PWA để cài lên Màn hình chính điện thoại (Home Screen)
+├── index.html                  # Giao diện chính Responsive Cham-trac-nghiem-PQC
+├── manifest.json               # Cấu hình PWA để cài lên Màn hình chính điện thoại
 ├── sw.js                       # Service Worker tự động lưu Cache để chạy Offline 100% không cần mạng
 ├── HUONG_DAN_GITHUB_PWA.md     # Tài liệu hướng dẫn này
 │
@@ -40,7 +40,7 @@ Thầy/cô có thể dùng 1 trong 2 cách sau:
 1. Đăng nhập vào tài khoản [GitHub](https://github.com/).
 2. Bấm dấu **`+`** ở góc trên cùng bên phải ➔ Chọn **`New repository`**.
 3. Điền thông tin:
-   - **Repository name**: ví dụ `cham-thi-2025` (hoặc tên tùy thích).
+   - **Repository name**: ví dụ `Cham-trac-nghiem-PQC` (hoặc tên tùy thích).
    - Chọn chế độ: **`Public`**.
    - Bấm nút xanh **`Create repository`**.
 4. Tại trang repo vừa tạo, bấm vào dòng chữ **`uploading an existing file`**.

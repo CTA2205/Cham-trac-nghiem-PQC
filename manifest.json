@@ -1,7 +1,7 @@
 {
-  "name": "Chấm Thi Trắc Nghiệm 2025+ GDPT",
-  "short_name": "Chấm Thi 2025",
-  "description": "Ứng dụng chấm bài thi trắc nghiệm theo định dạng chuẩn 2025 Bộ GD&ĐT - Hoạt động Offline 100% trên điện thoại & máy tính",
+  "name": "Cham-trac-nghiem-PQC",
+  "short_name": "Cham-trac-nghiem-PQC",
+  "description": "Ứng dụng chấm bài thi trắc nghiệm theo định dạng chuẩn Bộ GD&ĐT - Hoạt động Offline 100% trên điện thoại & máy tính",
   "start_url": "./index.html",
   "scope": "./",
   "display": "standalone",

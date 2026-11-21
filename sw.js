@@ -1,9 +1,9 @@
 /**
- * Service Worker - Chấm Thi Trắc Nghiệm 2025+ GDPT (PWA Offline-First)
+ * Service Worker - Cham-trac-nghiem-PQC (PWA Offline-First)
  * Tự động lưu cache toàn bộ ứng dụng để giáo viên mang máy vào phòng thi không có mạng vẫn chạy 100%.
  */
 
-const CACHE_NAME = 'cham-thi-2025-pwa-v8';
+const CACHE_NAME = 'cham-trac-nghiem-pqc-v9';
 
 const ASSETS_TO_CACHE = [
   './',
