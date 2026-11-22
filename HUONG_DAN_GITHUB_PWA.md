@@ -123,4 +123,40 @@ Khi mở đường link trên điện thoại bằng trình duyệt:
 ### BƯỚC 4: Bảng Điểm & Xuất Dữ Liệu (Tab 4 📊)
 - **📊 Xuất Excel (10 cột):** Tạo tệp Excel chuẩn font Times New Roman, khổ A4 ngang, 2 chữ số thập phân, tổng điểm in đậm, lặp lại tiêu đề khi sang trang, chân bảng có ngày xuất An Giang và 3 chức danh ký duyệt.
 - **📲 Chia Sẻ Bảng Điểm:** Sử dụng tính năng chia sẻ của điện thoại (Web Share API) để gửi trực tiếp tệp Excel qua **Zalo**, **Email cá nhân**, hoặc lưu vào **Google Drive** chỉ với 1 chạm!
-- **📦 Đóng gói ZIP:** Gom ảnh các bài làm và tệp Excel thành file ZIP.
+- **📦 Đóng gói ZIP:** Gom ảnh các bài làm và tệp Excel thành file ZIP (tệp Excel đặt ngay tại gốc ZIP và các tệp ảnh được đổi tên chuẩn theo SBD).
+
+---
+
+## V. CÁCH TẠO TỆP CÀI ĐẶT .APK CHO ĐIỆN THOẠI ANDROID
+
+Nếu thầy/cô muốn tạo tệp `.apk` để chép vào điện thoại hoặc gửi cho đồng nghiệp qua Zalo/Drive để cài đặt như một ứng dụng Android truyền thống, có 2 cách thực hiện rất đơn giản sau:
+
+### CÁCH 1: TẠO FILE APK ONLINE BẰNG PWABUILDER (KHUYÊN DÙNG - MIỄN PHÍ CỦA MICROSOFT)
+*Cách này tận dụng luôn đường link GitHub Pages đã đưa lên ở Mục II mà không cần cài thêm bất kỳ phần mềm lập trình nào.*
+
+1. Dùng trình duyệt trên máy tính truy cập trang: 👉 **[https://www.pwabuilder.com](https://www.pwabuilder.com)**
+2. Dán đường link GitHub Pages của thầy/cô vào ô URL (ví dụ: `https://cta2205.github.io/cham-trac-nghiem-pqc/`) rồi bấm **Start**.
+3. PWABuilder sẽ tự động kiểm tra và chấm điểm ứng dụng (đã có sẵn `manifest.json`, icon, Service Worker offline 100%).
+4. Bấm nút xanh **Package for Stores** ➔ Chọn mục **Android**.
+5. Bấm **Download Package** (hoặc chọn tạo file APK). Thầy/cô sẽ nhận được tệp cài đặt `.apk`.
+6. Gửi tệp `.apk` này vào điện thoại, bấm vào tệp để cài đặt và sử dụng bình thường.
+
+---
+
+### CÁCH 2: DÙNG PHẦN MỀM "WEBSITE 2 APK BUILDER" TRÊN MÁY TÍNH (ĐÓNG GÓI 100% OFFLINE)
+*Cách này đóng gói trọn gói toàn bộ mã nguồn bên trong thư mục `DONG_GOI_PWA_GITHUB` thành 1 file APK độc lập, chạy offline hoàn toàn mà không cần mạng Internet hay GitHub Pages.*
+
+1. Tải và mở phần mềm **Website 2 APK Builder** (bản miễn phí cho Windows).
+2. Tại mục **Mode**, chọn: **Local Website App** (Trang web cục bộ).
+3. Tại dòng **Directory of Local Website**: Bấm duyệt và chọn thư mục `DONG_GOI_PWA_GITHUB`.
+4. Điền các thông số:
+   - **App Title**: `Cham-trac-nghiem-PQC`
+   - **Package Name**: `com.pqc.chamtracnghiem`
+   - **App Icon**: Chọn file icon của ứng dụng.
+   - Bật các quyền cần thiết: **Camera** (để quét bài thi) và **Storage** (để lưu bảng điểm Excel/ZIP).
+5. Bấm nút **Generate APK**. Sau khoảng 15–30 giây, phần mềm sẽ tạo ra ngay file `Cham-trac-nghiem-PQC.apk` trên máy tính để thầy/cô sử dụng.
+
+---
+
+> 💡 **LỜI KHUYÊN HỮU ÍCH:** 
+> Thực tế, tính năng **"Cài đặt ứng dụng" trực tiếp từ Google Chrome** (hướng dẫn ở Mục III) đã biến trang web thành ứng dụng có biểu tượng ngoài màn hình, chạy toàn màn hình và hoạt động offline 100% y hệt file APK. Ưu điểm lớn nhất của cách này là mỗi khi thầy/cô cập nhật code mới lên GitHub, ứng dụng trên điện thoại sẽ **tự động nâng cấp** mà không cần phải gỡ ra cài lại file APK mới!

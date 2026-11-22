@@ -7,6 +7,46 @@ class ExportZipHandler {
   constructor() {}
 
   /**
+   * Sinh tên tệp ảnh bài làm chuẩn theo Số Báo Danh (SBD)
+   * - Nếu có tên học sinh: SBD_TenHocSinh.jpg (VD: 12000001_Nguyen_Le_Dan_An.jpg)
+   * - Nếu không có tên: SBD.jpg (VD: 12000001.jpg)
+   * - Tự động tránh trùng tên bằng hậu tố (2), (3)...
+   */
+  getPaperImageFileName(item, idx = 0, usedNames = new Set()) {
+    const rawSbd = (item && item.sbd ? item.sbd : '').toString().trim();
+    const sbdPart = rawSbd && rawSbd !== '________' && !rawSbd.includes('X') 
+      ? rawSbd 
+      : `Chua_SBD_${idx + 1}`;
+    
+    const rawName = (item && item.name ? item.name : '').trim();
+    const isGenericName = !rawName || /^học\s*sinh\s*sbd/i.test(rawName) || /^hoc\s*sinh\s*sbd/i.test(rawName);
+    
+    let baseName = sbdPart;
+    if (!isGenericName) {
+      // Chuẩn hóa tên bỏ dấu tiếng Việt để tương thích 100% mọi hệ điều hành khi giải nén ZIP
+      const safeName = rawName
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .replace(/[đĐ]/g, 'd')
+        .replace(/[^a-zA-Z0-9_\-]/g, '_')
+        .replace(/_+/g, '_')
+        .replace(/^_|_$/g, '');
+      if (safeName) {
+        baseName = `${sbdPart}_${safeName}`;
+      }
+    }
+
+    let finalName = `${baseName}.jpg`;
+    let counter = 1;
+    while (usedNames.has(finalName)) {
+      counter++;
+      finalName = `${baseName}_(${counter}).jpg`;
+    }
+    usedNames.add(finalName);
+    return finalName;
+  }
+
+  /**
    * Tạo gói nén ZIP gồm File Excel và Thư mục ảnh bài làm đã chấm
    * Tự động rã thư mục từng lớp nếu có nhiều lớp
    */
@@ -35,6 +75,9 @@ class ExportZipHandler {
     }
     const excelFileName = this.getExcelFileName(examMeta);
 
+    // Luôn đặt tệp Excel bảng điểm tổng hợp tại thư mục gốc của file ZIP
+    zip.file(excelFileName, excelBuffer);
+
     if (isMultiClass) {
       // Đóng gói rã theo từng lớp
       const summaryFolder = zip.folder("TongHop_ToanKhoi");
@@ -55,26 +98,25 @@ class ExportZipHandler {
           classFolder.file(classFileName, classExcelBuf);
         }
 
-        // Thư mục ảnh bài làm của lớp này
+        // Thư mục ảnh bài làm của lớp này (tên file đặt chuẩn theo SBD)
         const imgFolder = classFolder.folder("BaiLam_HocSinh");
+        const usedNames = new Set();
         classItems.forEach((item, idx) => {
           if (item.previewImage && item.previewImage.startsWith('data:image')) {
             const base64Data = item.previewImage.split(',')[1];
-            const safeName = (item.name || "").replace(/[^a-zA-Z0-9_\u00C0-\u024F\u1EA0-\u1EF9]/g, '_');
-            const imgName = `SBD_${item.sbd}_Made_${item.examCode}_${safeName}_${item.totalScore}d.jpg`;
+            const imgName = this.getPaperImageFileName(item, idx, usedNames);
             imgFolder.file(imgName, base64Data, { base64: true });
           }
         });
       }
     } else {
-      // 1 lớp duy nhất
-      zip.file(excelFileName, excelBuffer);
+      // 1 lớp duy nhất: Tệp Excel ở gốc ZIP và Thư mục ảnh bài làm đặt tên theo SBD
       const imgFolder = zip.folder("BaiLam_HocSinh");
+      const usedNames = new Set();
       gradedList.forEach((item, idx) => {
         if (item.previewImage && item.previewImage.startsWith('data:image')) {
           const base64Data = item.previewImage.split(',')[1];
-          const safeName = (item.name || "").replace(/[^a-zA-Z0-9_\u00C0-\u024F\u1EA0-\u1EF9]/g, '_');
-          const imgName = `SBD_${item.sbd}_Made_${item.examCode}_${safeName}_${item.totalScore}d.jpg`;
+          const imgName = this.getPaperImageFileName(item, idx, usedNames);
           imgFolder.file(imgName, base64Data, { base64: true });
         }
       });

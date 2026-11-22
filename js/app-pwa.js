@@ -4045,14 +4045,21 @@ class AppController {
       this.showToast("Không tìm thấy ảnh bài làm này!", "warning");
       return;
     }
+    let fileName = '';
+    if (window.exportZipHandler && window.exportZipHandler.getPaperImageFileName) {
+      fileName = window.exportZipHandler.getPaperImageFileName(item, 0);
+    } else {
+      const rawSbd = (item.sbd || '').toString().trim();
+      const sbdPart = rawSbd && rawSbd !== '________' && !rawSbd.includes('X') ? rawSbd : 'Chua_SBD';
+      fileName = `${sbdPart}.jpg`;
+    }
     const a = document.createElement('a');
     a.href = item.previewImage;
-    const safeName = (item.name || "HocSinh").replace(/\s+/g, '_');
-    a.download = `BaiThi_SBD_${item.sbd}_${safeName}_${item.totalScore}d.jpg`;
+    a.download = fileName;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
-    this.showToast("Đã tải ảnh bài làm của học sinh!", "success");
+    this.showToast(`Đã tải ảnh bài làm: ${fileName}`, "success");
   }
 
   closeReviewModal() {

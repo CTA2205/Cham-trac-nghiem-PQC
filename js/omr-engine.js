@@ -617,6 +617,49 @@ class OMREngine {
     // Tỉ lệ scale so với chuẩn A4 mẫu
     const sx = W / 1662.0;
     const sy = H / 2346.0;
+    const sMin = Math.min(sx, sy);
+
+    // ========================================================
+    // BỘ ĐỌC Ô TRÒN CHỐNG NHIỄU CHỮ IN SẴN (VÀNH NGOÀI + TÂM)
+    // Tự động phân tách vành ngoài (ringDark) và lõi số in (coreDark)
+    // ========================================================
+    function getRingAndPeak(cx, cy) {
+      let bestRing = 0;
+      let bestPeak = 0;
+      const rO = 9.0 * sMin;
+      const rI = 4.5 * sMin;
+
+      for (let jy = -2; jy <= 2; jy += 2) {
+        for (let jx = -2; jx <= 2; jx += 2) {
+          let rSum = 0, rCnt = 0;
+          let cSum = 0, cCnt = 0;
+          const curX = cx + jx * sMin;
+          const curY = cy + jy * sMin;
+
+          for (let dy = -Math.round(rO); dy <= Math.round(rO); dy++) {
+            for (let dx = -Math.round(rO); dx <= Math.round(rO); dx++) {
+              const d2 = dx * dx + dy * dy;
+              if (d2 <= rO * rO) {
+                const px = Math.min(W - 1, Math.max(0, Math.floor(curX + dx)));
+                const py = Math.min(H - 1, Math.max(0, Math.floor(curY + dy)));
+                const idx = (py * W + px) * 4;
+                const dark = 255 - (imgData[idx] * 299 + imgData[idx + 1] * 587 + imgData[idx + 2] * 114) / 1000;
+                if (d2 > rI * rI) {
+                  rSum += dark; rCnt++;
+                } else {
+                  cSum += dark; cCnt++;
+                }
+              }
+            }
+          }
+          const rDark = rCnt > 0 ? rSum / rCnt : 0;
+          const cDark = cCnt > 0 ? cSum / cCnt : 0;
+          if (rDark > bestRing) bestRing = rDark;
+          if (cDark > bestPeak) bestPeak = cDark;
+        }
+      }
+      return { bestRing, bestPeak, score: bestRing * 0.70 + bestPeak * 0.30 };
+    }
 
     // ==========================================
     // 1. VÙNG 1: SỐ BÁO DANH (8 CHỮ SỐ)
@@ -628,19 +671,26 @@ class OMREngine {
       const readings = [];
       for (let r = 0; r < 10; r++) {
         const cy = (262 + r * 46.0) * sy;
-        readings.push({ digit: r, dark: getPeakDarkness(cx, cy, 5, 4) });
+        const m = getRingAndPeak(cx, cy);
+        readings.push({ digit: r, ...m });
       }
-      readings.sort((a, b) => b.dark - a.dark);
-      const minD = Math.min(...readings.map(o => o.dark));
-      
-      const isTopShaded = (readings[0].dark >= 100 && (readings[0].dark - minD) >= 15);
-      const isDouble = isTopShaded && (readings[1].dark >= 110 && (readings[1].dark - minD) >= 20 && (readings[0].dark - readings[1].dark < 10));
+      readings.sort((a, b) => b.score - a.score);
+      const sortedScores = readings.map(o => o.score).sort((a, b) => a - b);
+      const median = sortedScores[Math.floor(sortedScores.length / 2)];
+      const top = readings[0];
+      const second = readings[1];
+
+      const topDiff = top.score - median;
+      const secondDiff = second.score - median;
+
+      const isTopShaded = (topDiff >= 14 && top.score >= 74) || (top.score >= 90 && topDiff >= 10);
+      const isDouble = isTopShaded && (secondDiff >= 14 && (top.score - second.score < 7));
 
       if (isDouble) {
         sbd += "X"; // Tô đúp ô trên cùng 1 cột SBD
         sbdShadedCols++;
       } else if (isTopShaded) {
-        sbd += String(readings[0].digit);
+        sbd += String(top.digit);
         sbdShadedCols++;
       } else {
         sbd += "_"; // Cột này không tô
@@ -667,17 +717,25 @@ class OMREngine {
         readings.push({ digit: r, dark: getPeakDarkness(cx, cy, 5, 4) });
       }
       readings.sort((a, b) => b.dark - a.dark);
-      const minD = Math.min(...readings.map(o => o.dark));
+      const sortedD = readings.map(o => o.dark).sort((a, b) => a - b);
+      const median = sortedD[Math.floor(sortedD.length / 2)];
+      const minD = sortedD[0];
+      const top = readings[0];
+      const second = readings[1];
 
-      const isTopShaded = (readings[0].dark >= 100 && (readings[0].dark - minD) >= 15);
-      const isDouble = isTopShaded && (readings[1].dark >= 110 && (readings[1].dark - minD) >= 20 && (readings[0].dark - readings[1].dark < 10));
+      const topDiffMed = top.dark - median;
+      const topDiffMin = top.dark - minD;
+      const topSecondDiff = top.dark - second.dark;
+
+      const isTopShaded = (top.dark >= 98) && (topDiffMed >= 7 || topDiffMin >= 13) && (topSecondDiff >= 4 || top.dark >= 115);
+      const isDouble = isTopShaded && (second.dark >= 98) && (second.dark - median >= 7) && (topSecondDiff < 6);
 
       if (isDouble) {
         // Tô đúp ô trên cùng 1 cột mã đề
         codeCols.push("X");
         madeShadedCols++;
       } else if (isTopShaded) {
-        codeCols.push(String(readings[0].digit));
+        codeCols.push(String(top.digit));
         madeShadedCols++;
       } else {
         codeCols.push("_"); // Cột này không tô
@@ -860,29 +918,31 @@ class OMREngine {
 
         for (const r of allowedRows) {
           const rowY = startYP3 + r * rowStepP3;
-          readings.push({ char: charsP3[r], dark: getPeakDarkness(colX, rowY, 5, 3) });
+          const m = getRingAndPeak(colX, rowY);
+          readings.push({ char: charsP3[r], r, rowY, ...m });
         }
-        readings.sort((a, b) => b.dark - a.dark);
-        const minD = Math.min(...readings.map(o => o.dark));
+        readings.sort((a, b) => b.score - a.score);
+        const sortedScores = readings.map(o => o.score).sort((a, b) => a - b);
+        const median = sortedScores[Math.floor(sortedScores.length / 2)];
+        const top = readings[0];
+        const second = readings[1];
 
-        // Nhận diện các ô đạt độ đậm vượt ngưỡng
-        const shadedInCol = readings.filter(o => (o.dark - minD) >= 28 && o.dark >= 95);
-        if (shadedInCol.length >= 2) {
-          // Bất kỳ cột nào có từ 2 ô tô trở lên -> Vi phạm quy chế tô đúp!
+        const topDiff = top.score - median;
+        const secondDiff = second.score - median;
+
+        const isShaded = (topDiff >= 14 && top.score >= 74) || (top.score >= 90 && topDiff >= 10);
+        const colDouble = isShaded && (secondDiff >= 14 && (top.score - second.score < 7));
+
+        if (colDouble) {
           isDoubleShaded = true;
           if (violationCol === -1) violationCol = c + 1;
-        }
-
-        // Lưu danh sách các ô học sinh đã tô (kể cả trường hợp tô đúp)
-        shadedInCol.forEach(sItem => {
-          const r = charsP3.indexOf(sItem.char);
-          const rowY = startYP3 + r * rowStepP3;
           if (!p3Shaded[qNum]) p3Shaded[qNum] = [];
-          p3Shaded[qNum].push({ c, r, char: sItem.char, colX, rowY });
-        });
-
-        if (shadedInCol.length === 1 && !isDoubleShaded) {
-          val += shadedInCol[0].char;
+          p3Shaded[qNum].push({ c, r: top.r, char: top.char, colX, rowY: top.rowY });
+          p3Shaded[qNum].push({ c, r: second.r, char: second.char, colX, rowY: second.rowY });
+        } else if (isShaded) {
+          val += top.char;
+          if (!p3Shaded[qNum]) p3Shaded[qNum] = [];
+          p3Shaded[qNum].push({ c, r: top.r, char: top.char, colX, rowY: top.rowY });
         }
       }
 

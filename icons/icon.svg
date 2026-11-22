@@ -34,7 +34,7 @@
 
     <!-- 2025 badge -->
     <rect x="156" y="360" width="200" height="40" rx="10" fill="#f8fafc" stroke="#cbd5e1" stroke-width="2" />
-    <text x="256" y="388" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#3b82f6" text-anchor="middle">CHẤM THI 2025</text>
+    <text x="256" y="388" font-family="Arial, sans-serif" font-size="20" font-weight="bold" fill="#3b82f6" text-anchor="middle">CHẤM THI PQC</text>
   </g>
   <!-- Big Green Checkmark badge -->
   <circle cx="380" cy="390" r="62" fill="#10b981" filter="url(#shadow)" />
