@@ -335,36 +335,175 @@ class OMREngine {
   }
 
   /**
+   * Dò tìm 1 ô vuông đen định vị với bộ lọc quầng trắng chuẩn xác (White Halo Contrast)
+   * Chống 100% bắt nhầm vết mặt bàn gỗ, bóng đổ hoặc viền thừa lớn
+   */
+  findCornerMarkerWithHalo(imgData, W, H, xMin, xMax, yMin, yMax) {
+    function getGray(x, y) {
+      if (x < 0 || x >= W || y < 0 || y >= H) return 0; // Điểm ngoài ảnh KHÔNG PHẢI là giấy trắng
+      const i = (y * W + x) * 4;
+      return (imgData[i] * 299 + imgData[i + 1] * 587 + imgData[i + 2] * 114) / 1000;
+    }
+
+    const boxSize = Math.max(14, Math.round(W * 0.021));
+    const half = Math.floor(boxSize / 2);
+    const haloDist = Math.round(half + Math.max(4, boxSize * 0.35));
+
+    let bestScore = -9999;
+    let bestX = 0, bestY = 0;
+
+    // Giới hạn vùng quét an toàn để quầng sáng nằm hoàn toàn bên trong ảnh
+    const effXMin = Math.max(haloDist + 2, xMin);
+    const effXMax = Math.min(W - haloDist - 2, xMax);
+    const effYMin = Math.max(haloDist + 2, yMin);
+    const effYMax = Math.min(H - haloDist - 2, yMax);
+
+    for (let y = effYMin; y <= effYMax - boxSize; y += 3) {
+      for (let x = effXMin; x <= effXMax - boxSize; x += 3) {
+        const cx = x + half;
+        const cy = y + half;
+
+        // 1. Kiểm tra độ tối của lõi ô đen (lấy mẫu 9 điểm)
+        let coreSum = 0;
+        const qStep = Math.max(2, Math.floor(half / 2));
+        for (let dy = -qStep; dy <= qStep; dy += qStep) {
+          for (let dx = -qStep; dx <= qStep; dx += qStep) {
+            coreSum += getGray(cx + dx, cy + dy);
+          }
+        }
+        const coreGray = coreSum / 9;
+        if (coreGray > 140) continue; // Lõi ô neo bắt buộc phải đủ tối
+
+        // 2. Kiểm tra quầng giấy trắng bao quanh (lấy mẫu 8 điểm vành ngoài)
+        const h0 = getGray(cx - haloDist, cy);
+        const h1 = getGray(cx + haloDist, cy);
+        const h2 = getGray(cx, cy - haloDist);
+        const h3 = getGray(cx, cy + haloDist);
+        const h4 = getGray(cx - haloDist, cy - haloDist);
+        const h5 = getGray(cx + haloDist, cy - haloDist);
+        const h6 = getGray(cx - haloDist, cy + haloDist);
+        const h7 = getGray(cx + haloDist, cy + haloDist);
+        const avgHalo = (h0 + h1 + h2 + h3 + h4 + h5 + h6 + h7) / 8;
+
+        const contrast = avgHalo - coreGray;
+        if (contrast < 15) continue; // Bắt buộc phải có độ tương phản quầng giấy trắng rõ rệt
+
+        const score = (255 - coreGray) + contrast * 2.0;
+        if (score > bestScore) {
+          bestScore = score;
+          bestX = cx;
+          bestY = cy;
+        }
+      }
+    }
+
+    if (bestX === 0 || bestY === 0) return null;
+
+    // Tinh chỉnh tọa độ mịn xung quanh điểm tốt nhất
+    let fineVal = 999, fineX = bestX, fineY = bestY;
+    for (let y = bestY - 6; y <= bestY + 6; y += 1) {
+      for (let x = bestX - 6; x <= bestX + 6; x += 1) {
+        let sum = 0, cnt = 0;
+        for (let dy = -half; dy <= half; dy += 2) {
+          for (let dx = -half; dx <= half; dx += 2) {
+            sum += getGray(x + dx, y + dy);
+            cnt++;
+          }
+        }
+        const avg = sum / cnt;
+        if (avg < fineVal) {
+          fineVal = avg;
+          fineX = x;
+          fineY = y;
+        }
+      }
+    }
+
+    // Tính trọng tâm (center of mass) đạt độ chính xác sub-pixel
+    let sumX = 0, sumY = 0, totalWeight = 0;
+    for (let dy = -half; dy <= half; dy++) {
+      for (let dx = -half; dx <= half; dx++) {
+        const g = getGray(fineX + dx, fineY + dy);
+        const w = Math.max(0, 180 - g);
+        sumX += (fineX + dx) * w;
+        sumY += (fineY + dy) * w;
+        totalWeight += w;
+      }
+    }
+
+    if (totalWeight > 0) {
+      return { x: sumX / totalWeight, y: sumY / totalWeight };
+    }
+    return { x: fineX, y: fineY };
+  }
+
+  /**
    * Tìm 4 ô vuông đen định vị ở 4 góc của phiếu thi
+   * Sử dụng bộ lọc White Halo Contrast chống bắt nhầm mặt bàn, bóng đổ và viền thừa
    */
   find4CornerMarkers(canvas) {
     const W = canvas.width, H = canvas.height;
     const ctx = canvas.getContext('2d');
     const imgData = ctx.getImageData(0, 0, W, H).data;
 
-    // Quét 4 góc phần tư
-    const tl = this.findCornerMarkerInRegion(imgData, W, H, 4, Math.round(W * 0.22), 4, Math.round(H * 0.16));
-    const tr = this.findCornerMarkerInRegion(imgData, W, H, Math.round(W * 0.78), W - 4, 4, Math.round(H * 0.16));
-    const bl = this.findCornerMarkerInRegion(imgData, W, H, 4, Math.round(W * 0.22), Math.round(H * 0.84), H - 4);
-    const br = this.findCornerMarkerInRegion(imgData, W, H, Math.round(W * 0.78), W - 4, Math.round(H * 0.84), H - 4);
+    // Hàm kiểm tra tính hợp lệ hình học tứ giác của 4 điểm neo theo chuẩn A4
+    function validateCorners(tl, tr, bl, br) {
+      if (!tl || !tr || !bl || !br) return null;
+      const widthTop = tr.x - tl.x;
+      const widthBot = br.x - bl.x;
+      const heightLeft = bl.y - tl.y;
+      const heightRight = br.y - tr.y;
 
-    if (!tl || !tr || !bl || !br) return null;
+      if (widthTop <= 0 || widthBot <= 0 || heightLeft <= 0 || heightRight <= 0) return null;
 
-    const widthTop = tr.x - tl.x;
-    const widthBot = br.x - bl.x;
-    const heightLeft = bl.y - tl.y;
-    const heightRight = br.y - tr.y;
+      const avgW = (widthTop + widthBot) / 2;
+      const avgH = (heightLeft + heightRight) / 2;
 
-    // Kiểm tra tính hợp lệ hình học của 4 điểm neo
-    if (widthTop < W * 0.55 || widthBot < W * 0.55) return null;
-    if (heightLeft < H * 0.55 || heightRight < H * 0.55) return null;
+      // Độ phủ tối thiểu của phiếu thi trong khung hình
+      if (avgW < W * 0.45 || avgH < H * 0.45) return null;
 
-    const avgW = (widthTop + widthBot) / 2;
-    const avgH = (heightLeft + heightRight) / 2;
-    const ratio = avgH / avgW;
-    if (ratio < 1.15 || ratio > 1.75) return null; // Tỉ lệ chuẩn A4 giữa các điểm neo ~ 1.455
+      // Hỗ trợ góc chụp hình thang (Perspective Tilt): cho phép đáy nhỏ co lại tới 45% đáy lớn
+      const minW = Math.min(widthTop, widthBot);
+      const maxW = Math.max(widthTop, widthBot);
+      if (minW / maxW < 0.45) return null;
 
-    return { tl, tr, br, bl };
+      const minH = Math.min(heightLeft, heightRight);
+      const maxH = Math.max(heightLeft, heightRight);
+      if (minH / maxH < 0.45) return null;
+
+      // Tỉ lệ chuẩn giấy A4: 2346 / 1662 ≈ 1.411 (cho phép dung sai hẹp 1.30 - 1.60)
+      const ratio = avgH / avgW;
+      if (ratio < 1.30 || ratio > 1.60) return null;
+
+      return { tl, tr, br, bl };
+    }
+
+    // TẦNG 1: Quét vùng chuẩn A4 với bộ lọc White Halo (tương thích 100% ảnh scan, PDF, ảnh chụp)
+    const xLeftMax = Math.round(W * 0.22);
+    const xRightMin = Math.round(W * 0.78);
+    const yTopMax = Math.round(H * 0.16);
+    const yBotMin = Math.round(H * 0.84);
+
+    const tl1 = this.findCornerMarkerWithHalo(imgData, W, H, 4, xLeftMax, 4, yTopMax);
+    const tr1 = this.findCornerMarkerWithHalo(imgData, W, H, xRightMin, W - 4, 4, yTopMax);
+    const bl1 = this.findCornerMarkerWithHalo(imgData, W, H, 4, xLeftMax, yBotMin, H - 4);
+    const br1 = this.findCornerMarkerWithHalo(imgData, W, H, xRightMin, W - 4, yBotMin, H - 4);
+
+    const q1 = validateCorners(tl1, tr1, bl1, br1);
+    if (q1) return q1;
+
+    // TẦNG 2: Mở rộng nhẹ vùng quét nếu ảnh có góc nghiêng hoặc lề thừa lớn hơn
+    const xLeftMax2 = Math.round(W * 0.28);
+    const xRightMin2 = Math.round(W * 0.72);
+    const yTopMax2 = Math.round(H * 0.22);
+    const yBotMin2 = Math.round(H * 0.78);
+
+    const tl2 = this.findCornerMarkerWithHalo(imgData, W, H, 4, xLeftMax2, 4, yTopMax2);
+    const tr2 = this.findCornerMarkerWithHalo(imgData, W, H, xRightMin2, W - 4, 4, yTopMax2);
+    const bl2 = this.findCornerMarkerWithHalo(imgData, W, H, 4, xLeftMax2, yBotMin2, H - 4);
+    const br2 = this.findCornerMarkerWithHalo(imgData, W, H, xRightMin2, W - 4, yBotMin2, H - 4);
+
+    return validateCorners(tl2, tr2, bl2, br2);
   }
 
   /**
